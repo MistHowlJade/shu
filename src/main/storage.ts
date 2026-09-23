@@ -1,4 +1,4 @@
-import { app, shell } from 'electron'
+import { app, safeStorage, shell } from 'electron'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { randomUUID } from 'node:crypto'
@@ -17,6 +17,33 @@ import {
 } from '../shared/types'
 
 /* ---------------- 基础工具 ---------------- */
+
+/* 加密标记前缀:带前缀的 apiKey 落盘前经过 safeStorage 加密 */
+const ENC_PREFIX = 'enc:'
+
+/** 落盘前加密:系统支持时用 safeStorage(DPAPI/Keychain),否则退回明文 */
+function sealApiKey(plain: string): string {
+  if (!plain) return ''
+  try {
+    if (safeStorage.isEncryptionAvailable()) {
+      return ENC_PREFIX + safeStorage.encryptString(plain).toString('base64')
+    }
+  } catch {
+    /* 加密失败按明文保存,避免丢 Key */
+  }
+  return plain
+}
+
+/** 读盘后解密:无法解密(如换了系统用户)时返回空串,用户需重新填写 */
+function openApiKey(stored: string): string {
+  if (!stored) return ''
+  if (!stored.startsWith(ENC_PREFIX)) return stored /* 旧版明文,直接迁移 */
+  try {
+    return safeStorage.decryptString(Buffer.from(stored.slice(ENC_PREFIX.length), 'base64'))
+  } catch {
+    return ''
+  }
+}
 
 function readJson<T>(file: string): T | null {
   try {
@@ -100,15 +127,26 @@ function settingsFile(): string {
 export function loadSettings(): AppSettings {
   const stored = readJson<Partial<AppSettings>>(settingsFile())
   if (!stored) return structuredClone(DEFAULT_SETTINGS)
-  return {
+  const settings = {
     ...structuredClone(DEFAULT_SETTINGS),
     ...stored,
     ai: normalizeAiSettings(stored.ai)
   }
+  /* 落盘为密文,读入内存/发给渲染端前解密 */
+  settings.ai.profiles = settings.ai.profiles.map((p) => ({ ...p, apiKey: openApiKey(p.apiKey) }))
+  return settings
 }
 
 export function saveSettings(settings: AppSettings): void {
-  writeJson(settingsFile(), settings)
+  /* 只加密落盘副本,不影响内存与渲染端持有的明文对象 */
+  const toWrite: AppSettings = {
+    ...settings,
+    ai: {
+      ...settings.ai,
+      profiles: settings.ai.profiles.map((p) => ({ ...p, apiKey: sealApiKey(p.apiKey) }))
+    }
+  }
+  writeJson(settingsFile(), toWrite)
 }
 
 /* ---------------- 书库与书籍 ---------------- */
