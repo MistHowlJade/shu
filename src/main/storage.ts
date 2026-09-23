@@ -66,7 +66,7 @@ export function countWords(text: string): number {
 }
 
 /** 清理书名中不适合作为目录名的字符 */
-function sanitizeDirName(name: string): string {
+export function sanitizeDirName(name: string): string {
   const cleaned = name.replace(/[\\/:*?"<>|\r\n]/g, '').trim()
   return cleaned || '未命名'
 }
@@ -78,7 +78,7 @@ function sanitizeDirName(name: string): string {
  * - 旧版扁平结构(baseUrl/apiKey/model)自动迁移为单个「模型配置」
  * - 新版配置列表则补全缺失字段
  */
-function normalizeAiSettings(stored: unknown): AISettings {
+export function normalizeAiSettings(stored: unknown): AISettings {
   const defaults = structuredClone(DEFAULT_AI_SETTINGS)
   if (!stored || typeof stored !== 'object') return defaults
   const legacy = stored as Partial<AISettings> & { baseUrl?: string; apiKey?: string; model?: string }

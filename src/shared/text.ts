@@ -21,12 +21,18 @@ export function chunkText(text: string, size = 4500): string[] {
 export function parseJsonLoose<T>(text: string): T | null {
   if (!text) return null
   const cleaned = text.replace(/```(?:json)?/gi, '').trim()
-  const candidates = [cleaned]
   const firstObj = cleaned.indexOf('{')
   const lastObj = cleaned.lastIndexOf('}')
-  if (firstObj !== -1 && lastObj > firstObj) candidates.push(cleaned.slice(firstObj, lastObj + 1))
   const firstArr = cleaned.indexOf('[')
   const lastArr = cleaned.lastIndexOf(']')
+  const openIdx = [firstObj, firstArr].filter((i) => i !== -1).sort((a, b) => a - b)[0]
+  const closeIdx = [lastObj, lastArr].filter((i) => i !== -1).sort((a, b) => b - a)[0]
+  const candidates = [cleaned]
+  /* 首个括号到末个括号:让 [{...}] 这类单元素数组整体参与解析,而不是落到内层对象 */
+  if (openIdx !== undefined && closeIdx !== undefined && closeIdx > openIdx) {
+    candidates.push(cleaned.slice(openIdx, closeIdx + 1))
+  }
+  if (firstObj !== -1 && lastObj > firstObj) candidates.push(cleaned.slice(firstObj, lastObj + 1))
   if (firstArr !== -1 && lastArr > firstArr) candidates.push(cleaned.slice(firstArr, lastArr + 1))
   for (const candidate of candidates) {
     try {
