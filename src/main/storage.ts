@@ -207,7 +207,7 @@ export function listBooks(root: string): BookSummaryInternal[] {
   if (!fs.existsSync(root)) return []
   const result: BookSummaryInternal[] = []
   for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
-    if (!entry.isDirectory()) continue
+    if (!entry.isDirectory() || entry.name === BACKUPS_DIR_NAME) continue
     const dir = path.join(root, entry.name)
     const book = readBook(dir)
     if (book) {
@@ -376,6 +376,80 @@ export function readPrecedingChapters(bookDir: string, book: Book, chapterId: st
     if (ch) result.push(ch)
   }
   return result
+}
+
+/* ---------------- 备份 ---------------- */
+
+/** 书库根目录下的备份总目录(其下按书籍目录名分子目录,每份快照一个子目录) */
+export const BACKUPS_DIR_NAME = '_backups'
+/** 每本书保留的快照份数,超出时删最旧 */
+const KEEP_SNAPSHOTS = 7
+/** 快照目录名:snap-YYYYMMDD-HHMMSS */
+const SNAP_PATTERN = /^snap-(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})$/
+/** 每日自动备份的最小间隔 */
+const AUTO_BACKUP_INTERVAL_MS = 24 * 3600 * 1000
+
+function backupsRoot(libraryRoot: string): string {
+  return path.join(libraryRoot, BACKUPS_DIR_NAME)
+}
+
+function listSnapshots(bookBackups: string): string[] {
+  if (!fs.existsSync(bookBackups)) return []
+  return fs
+    .readdirSync(bookBackups)
+    .filter((n) => SNAP_PATTERN.test(n))
+    .sort()
+}
+
+function snapTime(name: string): Date {
+  const m = SNAP_PATTERN.exec(name)
+  if (!m) return new Date(0)
+  return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6])
+}
+
+export interface SnapshotResult {
+  skipped: boolean
+  /** skipped 的原因:empty=书还没有内容;recent=24 小时内已有快照 */
+  reason?: 'empty' | 'recent'
+  /** 新建的快照目录(或最近一份快照的目录) */
+  snapshotDir?: string
+}
+
+/** 给整本书拍快照:完整复制书目录(book.json + 全部章节)。force=false 且 24 小时内已有快照时跳过。 */
+export function snapshotBook(bookDir: string, libraryRoot: string, opts?: { force?: boolean }): SnapshotResult {
+  const book = readBook(bookDir)
+  if (!book) throw new Error('书籍不存在或已损坏:' + bookDir)
+  if (!book.chapters.some((c) => c.wordCount > 0)) return { skipped: true, reason: 'empty' }
+
+  const bookBackups = path.join(backupsRoot(libraryRoot), path.basename(bookDir))
+  fs.mkdirSync(bookBackups, { recursive: true })
+  const existing = listSnapshots(bookBackups)
+
+  if (!opts?.force && existing.length > 0) {
+    const latest = existing[existing.length - 1]
+    if (Date.now() - snapTime(latest).getTime() < AUTO_BACKUP_INTERVAL_MS) {
+      return { skipped: true, reason: 'recent', snapshotDir: path.join(bookBackups, latest) }
+    }
+  }
+
+  const d = new Date()
+  const p = (n: number, w = 2): string => String(n).padStart(w, '0')
+  const name = `snap-${p(d.getFullYear(), 4)}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`
+  const target = path.join(bookBackups, name)
+  fs.cpSync(bookDir, target, { recursive: true })
+
+  const all = listSnapshots(bookBackups)
+  for (const old of all.slice(0, Math.max(0, all.length - KEEP_SNAPSHOTS))) {
+    fs.rmSync(path.join(bookBackups, old), { recursive: true, force: true })
+  }
+  return { skipped: false, snapshotDir: target }
+}
+
+/** 在资源管理器中打开备份总目录 */
+export async function openBackupsFolder(libraryRoot: string): Promise<void> {
+  const root = backupsRoot(libraryRoot)
+  fs.mkdirSync(root, { recursive: true })
+  await shell.openPath(root)
 }
 
 /* ---------------- 导出 ---------------- */

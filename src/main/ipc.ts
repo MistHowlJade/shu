@@ -38,12 +38,14 @@ import {
   ensureLibraryRoot,
   listBooks,
   loadSettings,
+  openBackupsFolder,
   readBook,
   readChapter,
   readPrecedingChapters,
   saveBook,
   saveChapter,
-  saveSettings
+  saveSettings,
+  snapshotBook
 } from './storage'
 
 /* 流式增量按请求定向回传:不再用模块级 sender 共享,避免多窗口/窗口重建后发错目标 */
@@ -154,6 +156,17 @@ export function registerIpcHandlers(): void {
     return saveBook(target, book)
   })
   ipcMain.handle('books:delete', (_e, dir: string) => deleteBook(assertBookDir(dir)))
+  /* 手动备份(force)/每日自动备份(非 force,24 小时内已有快照则跳过) */
+  ipcMain.handle('books:backup', (_e, dir: string, force: boolean) => {
+    const settings = loadSettings()
+    const root = ensureLibraryRoot(settings)
+    return snapshotBook(assertBookDir(dir), root, { force })
+  })
+  ipcMain.handle('books:openBackups', async () => {
+    const settings = loadSettings()
+    await openBackupsFolder(ensureLibraryRoot(settings))
+    return true
+  })
   ipcMain.handle('books:exportTxt', async (_e, dir: string) => {
     const book = requireBook(assertBookDir(dir))
     const result = await dialog.showSaveDialog({

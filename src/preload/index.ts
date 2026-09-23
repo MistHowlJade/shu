@@ -20,7 +20,12 @@ const api = {
       ipcRenderer.invoke('books:create', info),
     save: (dir: string, book: Book): Promise<Book> => ipcRenderer.invoke('books:save', dir, book),
     remove: (dir: string): Promise<void> => ipcRenderer.invoke('books:delete', dir),
-    exportTxt: (dir: string): Promise<string | null> => ipcRenderer.invoke('books:exportTxt', dir)
+    exportTxt: (dir: string): Promise<string | null> => ipcRenderer.invoke('books:exportTxt', dir),
+    /** 备份整本书;force=false 时 24 小时内已有快照则跳过(每日自动备份用) */
+    backup: (dir: string, force: boolean): Promise<{ skipped: boolean; reason?: 'empty' | 'recent'; snapshotDir?: string }> =>
+      ipcRenderer.invoke('books:backup', dir, force),
+    /** 在资源管理器中打开备份目录 */
+    openBackups: (): Promise<boolean> => ipcRenderer.invoke('books:openBackups')
   },
   chapters: {
     read: (dir: string, chapterId: string): Promise<Chapter | null> =>

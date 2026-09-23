@@ -174,6 +174,8 @@ interface StoreState {
   refreshBooks: () => Promise<void>
   createBook: (info: { title: string; author: string; genre: string; description: string }) => Promise<void>
   removeBook: (dir: string) => Promise<void>
+  /** 手动立即备份整本书(书库页按钮) */
+  backupBook: (dir: string) => Promise<void>
   openBookAt: (dir: string) => Promise<void>
   backToLibrary: () => Promise<void>
   updateBook: (mutate: (draft: Book) => void) => Promise<void>
@@ -355,6 +357,19 @@ export const useStore = create<StoreState>()((set, get) => {
       get().showToast('已移入回收站')
     },
 
+    backupBook: async (dir) => {
+      try {
+        const result = await window.api.books.backup(dir, true)
+        if (result.skipped && result.reason === 'empty') {
+          get().showToast('这本书还没有正文,无需备份', 'error')
+        } else if (result.snapshotDir) {
+          get().showToast(`已备份:${result.snapshotDir}`)
+        }
+      } catch (err) {
+        get().showToast(`备份失败:${err instanceof Error ? err.message : String(err)}`, 'error')
+      }
+    },
+
     openBookAt: async (dir) => {
       if (get().chapter && get().dirty) await get().saveNow()
       const summary = get().books.find((b) => b.dir === dir)
@@ -386,6 +401,8 @@ export const useStore = create<StoreState>()((set, get) => {
       const settings = { ...get().settings, lastBookPath: dir }
       set({ settings })
       void window.api.settings.save(settings)
+      /* 每日自动备份:静默进行,24 小时内已有快照则主进程自动跳过 */
+      void window.api.books.backup(dir, false).catch(() => {})
       const firstChapter = loaded.chapters[0]
       if (firstChapter) await get().selectChapter(firstChapter.id)
     },

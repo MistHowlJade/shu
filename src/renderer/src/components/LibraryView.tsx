@@ -1,4 +1,4 @@
-import { FolderOpen, Plus, Settings, Trash2 } from 'lucide-react'
+import { Archive, FolderOpen, Plus, Settings, Trash2 } from 'lucide-react'
 import { totalWords, useStore } from '../store'
 
 export default function LibraryView() {
@@ -6,6 +6,7 @@ export default function LibraryView() {
   const settings = useStore((s) => s.settings)
   const openBookAt = useStore((s) => s.openBookAt)
   const removeBook = useStore((s) => s.removeBook)
+  const backupBook = useStore((s) => s.backupBook)
   const setCreateBookOpen = useStore((s) => s.setCreateBookOpen)
   const setSettingsOpen = useStore((s) => s.setSettingsOpen)
   const showToast = useStore((s) => s.showToast)
@@ -39,6 +40,14 @@ export default function LibraryView() {
             <button className="btn-outline" onClick={() => void changeLibraryRoot()}>
               <FolderOpen size={15} />
               书库目录
+            </button>
+            <button
+              className="btn-outline"
+              title="打开本地备份目录(每本书保留最近 7 份快照,打开书籍时每日自动备份)"
+              onClick={() => void window.api.books.openBackups()}
+            >
+              <Archive size={15} />
+              备份
             </button>
             <button className="btn-outline" onClick={() => setSettingsOpen(true)}>
               <Settings size={15} />
@@ -92,6 +101,16 @@ export default function LibraryView() {
                       文件损坏
                     </span>
                   )}
+                  <button
+                    className="shrink-0 rounded p-1 t3 opacity-0 transition hover:text-[var(--accent)] group-hover:opacity-100"
+                    title="立即备份这本书(完整复制到 _backups 目录)"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      void backupBook(dir)
+                    }}
+                  >
+                    <Archive size={15} />
+                  </button>
                   <button
                     className="shrink-0 rounded p-1 t3 opacity-0 transition hover:text-[var(--danger)] group-hover:opacity-100"
                     title="删除书籍(移入回收站)"
