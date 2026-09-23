@@ -11,6 +11,7 @@ import OutlineView from './components/OutlineView'
 import ImportView from './components/ImportView'
 import SettingsModal from './components/SettingsModal'
 import CreateBookModal from './components/CreateBookModal'
+import HistoryModal from './components/HistoryModal'
 import CommandPalette from './components/CommandPalette'
 import Toast from './components/Toast'
 
@@ -97,6 +98,7 @@ export default function App() {
         if (s.paletteOpen) s.setPaletteOpen(false)
         else if (s.settingsOpen) s.setSettingsOpen(false)
         else if (s.createBookOpen) s.setCreateBookOpen(false)
+        else if (s.historyOpen) s.setHistoryOpen(false)
         else if (s.focusMode) s.setFocusMode(false)
       }
     }
@@ -166,6 +168,7 @@ export default function App() {
       <CommandPalette />
       <SettingsModal />
       <CreateBookModal />
+      <HistoryModal />
       <Toast />
     </div>
   )

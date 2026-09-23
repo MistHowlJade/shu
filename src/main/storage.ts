@@ -273,6 +273,72 @@ function chaptersDir(bookDir: string): string {
   return path.join(bookDir, 'chapters')
 }
 
+/* 章节历史版本:chapters/history/<ch-0001>-<毫秒时间戳>.json,保存覆盖前自动归档 */
+const CHAPTER_HISTORY_DIR = 'history'
+/** 每章保留的历史版本数 */
+const KEEP_CHAPTER_HISTORY = 10
+
+function historyDir(bookDir: string): string {
+  return path.join(chaptersDir(bookDir), CHAPTER_HISTORY_DIR)
+}
+
+/** 章节文件名(不含 .json)对应的历史文件名正则,如 ch-0001-1700000000000.json */
+function historyPattern(base: string): RegExp {
+  return new RegExp(`^${base}-(\\d{13})\\.json$`)
+}
+
+/** 把即将被覆盖的旧章节归档为一份历史版本,并按 KEEP_CHAPTER_HISTORY 裁剪 */
+function archiveChapter(bookDir: string, file: string, old: Chapter): void {
+  const dir = historyDir(bookDir)
+  fs.mkdirSync(dir, { recursive: true })
+  const base = file.replace(/\.json$/, '')
+  fs.writeFileSync(path.join(dir, `${base}-${Date.now()}.json`), JSON.stringify(old, null, 2), 'utf-8')
+  const all = fs
+    .readdirSync(dir)
+    .filter((n) => historyPattern(base).test(n))
+    .sort()
+  for (const stale of all.slice(0, Math.max(0, all.length - KEEP_CHAPTER_HISTORY))) {
+    fs.rmSync(path.join(dir, stale), { force: true })
+  }
+}
+
+export interface ChapterHistoryEntry {
+  /** history 目录下的文件名 */
+  file: string
+  /** 归档时间(毫秒,来自文件名) */
+  time: number
+  title: string
+  wordCount: number
+}
+
+/** 列出某章的历史版本,新→旧 */
+export function listChapterHistory(bookDir: string, chapterId: string): ChapterHistoryEntry[] {
+  const book = readBook(bookDir)
+  const meta = book?.chapters.find((c) => c.id === chapterId)
+  if (!meta) return []
+  const dir = historyDir(bookDir)
+  if (!fs.existsSync(dir)) return []
+  const pattern = historyPattern(meta.file.replace(/\.json$/, ''))
+  const entries: ChapterHistoryEntry[] = []
+  for (const name of fs.readdirSync(dir)) {
+    const m = pattern.exec(name)
+    if (!m) continue
+    const snap = readJson<Chapter>(path.join(dir, name))
+    if (!snap) continue
+    entries.push({ file: name, time: Number(m[1]), title: snap.title, wordCount: countWords(snap.content) })
+  }
+  return entries.sort((a, b) => b.time - a.time)
+}
+
+/** 读取某份历史版本(文件名校验防路径穿越) */
+export function readChapterSnapshot(bookDir: string, chapterId: string, file: string): Chapter | null {
+  const book = readBook(bookDir)
+  const meta = book?.chapters.find((c) => c.id === chapterId)
+  if (!meta) return null
+  if (!historyPattern(meta.file.replace(/\.json$/, '')).test(file)) return null
+  return readJson<Chapter>(path.join(historyDir(bookDir), file))
+}
+
 function nextChapterFile(bookDir: string): string {
   const dir = chaptersDir(bookDir)
   fs.mkdirSync(dir, { recursive: true })
@@ -296,12 +362,17 @@ export interface SaveChapterResult {
   meta: ChapterMeta
 }
 
-/** 保存章节文件,并同步 book.json 中对应章节的元数据 */
+/** 保存章节文件,并同步 book.json 中对应章节的元数据;旧正文与新版不同时自动归档一份历史版本 */
 export function saveChapter(bookDir: string, chapter: Chapter): SaveChapterResult {
   const book = readBook(bookDir)
   if (!book) throw new Error('书籍不存在: ' + bookDir)
   const meta = book.chapters.find((c) => c.id === chapter.id)
   if (!meta) throw new Error('章节不存在: ' + chapter.id)
+
+  const old = readJson<Chapter>(path.join(chaptersDir(bookDir), meta.file))
+  if (old && old.content.trim() && old.content !== chapter.content) {
+    archiveChapter(bookDir, meta.file, old)
+  }
 
   chapter.updatedAt = Date.now()
   meta.title = chapter.title

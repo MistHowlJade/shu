@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { FileText } from 'lucide-react'
+import { FileText, History } from 'lucide-react'
 import { useStore } from '../store'
 import type { ChapterStatus } from '@shared/types'
 
@@ -83,6 +83,13 @@ export default function Editor() {
               {STATUS_LABEL[meta.status]}
             </button>
           )}
+          <button
+            className="btn-ghost shrink-0 !px-2"
+            title="历史版本:每次保存覆盖正文前,旧版本自动归档(保留最近 10 份)"
+            onClick={() => useStore.getState().setHistoryOpen(true)}
+          >
+            <History size={16} />
+          </button>
         </div>
       </div>
       <textarea

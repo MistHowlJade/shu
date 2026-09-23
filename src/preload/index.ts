@@ -35,7 +35,13 @@ const api = {
     create: (dir: string, volumeId: string, title: string): Promise<{ chapter: Chapter; meta: ChapterMeta }> =>
       ipcRenderer.invoke('chapters:create', dir, volumeId, title),
     remove: (dir: string, chapterId: string): Promise<boolean> =>
-      ipcRenderer.invoke('chapters:delete', dir, chapterId)
+      ipcRenderer.invoke('chapters:delete', dir, chapterId),
+    /** 本章历史版本列表(新→旧) */
+    history: (dir: string, chapterId: string): Promise<{ file: string; time: number; title: string; wordCount: number }[]> =>
+      ipcRenderer.invoke('chapters:history', dir, chapterId),
+    /** 读取某份历史版本 */
+    readHistory: (dir: string, chapterId: string, file: string): Promise<Chapter | null> =>
+      ipcRenderer.invoke('chapters:readHistory', dir, chapterId, file)
   },
   ai: {
     test: (): Promise<{ ok: boolean; message: string }> => ipcRenderer.invoke('ai:test'),

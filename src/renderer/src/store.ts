@@ -190,6 +190,11 @@ interface StoreState {
   deleteChapter: (id: string) => Promise<void>
   moveChapter: (id: string, offset: -1 | 1) => Promise<void>
   cycleChapterStatus: (id: string) => Promise<void>
+  /** 章节历史版本弹窗 */
+  historyOpen: boolean
+  setHistoryOpen: (open: boolean) => void
+  /** 把某份历史版本载入编辑器(不立即落盘,保存后才生效) */
+  restoreHistory: (file: string) => Promise<void>
 
   addVolume: () => Promise<void>
   updateVolume: (id: string, patch: Partial<Volume>) => Promise<void>
@@ -516,6 +521,27 @@ export const useStore = create<StoreState>()((set, get) => {
         if (!meta) return
         meta.status = order[(order.indexOf(meta.status) + 1) % order.length]
       })
+    },
+
+    historyOpen: false,
+    setHistoryOpen: (open) => set({ historyOpen: open }),
+
+    restoreHistory: async (file) => {
+      const { bookDir, chapter } = get()
+      if (!bookDir || !chapter) return
+      const snap = await window.api.chapters.readHistory(bookDir, chapter.id, file)
+      if (!snap) {
+        get().showToast('历史版本读取失败', 'error')
+        return
+      }
+      /* 只载入编辑器并标脏:当前版本在保存前已被归档,不会丢 */
+      set((state) => ({
+        chapter: state.chapter ? { ...state.chapter, title: snap.title, outline: snap.outline, summary: snap.summary } : state.chapter,
+        content: snap.content,
+        dirty: true
+      }))
+      set({ historyOpen: false })
+      get().showToast('已载入该历史版本,保存后生效')
     },
 
     addVolume: async () => {

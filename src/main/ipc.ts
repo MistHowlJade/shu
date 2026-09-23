@@ -37,10 +37,12 @@ import {
   deleteChapter,
   ensureLibraryRoot,
   listBooks,
+  listChapterHistory,
   loadSettings,
   openBackupsFolder,
   readBook,
   readChapter,
+  readChapterSnapshot,
   readPrecedingChapters,
   saveBook,
   saveChapter,
@@ -194,6 +196,12 @@ export function registerIpcHandlers(): void {
     deleteChapter(assertBookDir(dir), chapterId)
     return true
   })
+  ipcMain.handle('chapters:history', (_e, dir: string, chapterId: string) =>
+    listChapterHistory(assertBookDir(dir), chapterId)
+  )
+  ipcMain.handle('chapters:readHistory', (_e, dir: string, chapterId: string, file: string) =>
+    readChapterSnapshot(assertBookDir(dir), chapterId, file)
+  )
 
   /* 关窗前的同步兜底保存(beforeunload 里 sendSync 调用):尽力写完未落盘的编辑 */
   ipcMain.on(
