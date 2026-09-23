@@ -1,0 +1,20 @@
+appId: com.ainovel.studio
+productName: AI网文工作台
+directories:
+  output: release
+  buildResources: build
+files:
+  - out/**
+  - "!node_modules/**"
+asar: true
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  artifactName: ${productName}-${version}-${arch}.${ext}
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
