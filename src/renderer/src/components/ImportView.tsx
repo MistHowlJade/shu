@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FileSearch, FileText, Globe, Loader2, ScanSearch, Square, Trash2, X } from 'lucide-react'
+import { Clipboard, FileSearch, FileText, Globe, Loader2, Plus, ScanSearch, Square, Trash2, X } from 'lucide-react'
 import { chunkText, scanSignature, useStore } from '../store'
 
 export default function ImportView() {
@@ -14,8 +14,12 @@ export default function ImportView() {
   const removeScanRealm = useStore((s) => s.removeScanRealm)
   const removeScanItem = useStore((s) => s.removeScanItem)
   const removeScanCharacter = useStore((s) => s.removeScanCharacter)
+  const applyScanRealm = useStore((s) => s.applyScanRealm)
+  const applyScanItem = useStore((s) => s.applyScanItem)
+  const applyScanCharacter = useStore((s) => s.applyScanCharacter)
   const updateScanWorldview = useStore((s) => s.updateScanWorldview)
   const applyScanToBook = useStore((s) => s.applyScanToBook)
+  const showToast = useStore((s) => s.showToast)
   const [url, setUrl] = useState('')
 
   const analyzing = importer.status === 'analyzing'
@@ -33,6 +37,14 @@ export default function ImportView() {
   /* 全书已过一遍但有段落失败(多为限流)→ 只定向重试失败段 */
   const hasFailed =
     !analyzing && importer.failedChunks.length > 0 && importer.resumeSig === scanSignature(importer, fullText)
+
+  /* 高危确认:覆盖模式开始扫描前强制二次确认 */
+  function confirmStart(fromScratch?: boolean): void {
+    if (importer.worldMode === 'replace') {
+      if (!window.confirm('覆盖模式会清空当前书的对应设定后再写入扫描结果,确认继续?')) return
+    }
+    void startScan(fromScratch ? { fromScratch: true } : undefined)
+  }
 
   return (
     <div className="flex min-h-0 flex-1">
@@ -124,7 +136,7 @@ export default function ImportView() {
             </button>
           ) : (
             <div className="flex flex-1 gap-2">
-              <button className="btn-primary flex-1" disabled={!importer.text.trim()} onClick={() => void startScan()}>
+              <button className="btn-primary flex-1" disabled={!importer.text.trim()} onClick={() => confirmStart()}>
                 <ScanSearch size={14} />
                 {canResume
                   ? `继续扫描(第 ${importer.resumeIndex + 1}/${chunkCount} 段)`
@@ -136,7 +148,7 @@ export default function ImportView() {
                 <button
                   className="btn-outline shrink-0"
                   title="放弃断点,从第 1 段重新扫描(已有结果会按去重保留)"
-                  onClick={() => void startScan({ fromScratch: true })}
+                  onClick={() => confirmStart(true)}
                 >
                   重新扫描
                 </button>
@@ -192,7 +204,20 @@ export default function ImportView() {
         {hasResults && (
           <div className="mt-3 space-y-4">
             <div>
-              <label className="field-label">世界观要点(可直接编辑,写入「世界背景」)</label>
+              <div className="flex items-center justify-between">
+                <label className="field-label">世界观要点(可直接编辑,写入「世界背景」)</label>
+                <button
+                  className="btn-ghost !px-1.5 !py-0.5 !text-[11px]"
+                  title="复制全部要点"
+                  onClick={() => {
+                    void navigator.clipboard.writeText(r.worldviewText)
+                    showToast('已复制')
+                  }}
+                >
+                  <Clipboard size={11} />
+                  复制
+                </button>
+              </div>
               <textarea
                 className="field-input min-h-28 resize-y !text-xs"
                 value={r.worldviewText}
@@ -201,7 +226,7 @@ export default function ImportView() {
             </div>
 
             <div>
-              <label className="field-label">境界 / 等级体系(写入「力量等级体系」,按顺序连接)</label>
+              <label className="field-label">境界 / 等级体系(写入「力量等级体系」,按顺序连接;+ 号单条导入)</label>
               <div className="flex flex-wrap gap-1.5">
                 {r.realms.length === 0 && <span className="text-xs t3">未提取到</span>}
                 {r.realms.map((realm, i) => (
@@ -211,7 +236,10 @@ export default function ImportView() {
                     style={{ background: 'var(--accent-soft)', color: 'var(--accent-ink)' }}
                   >
                     {realm}
-                    <button onClick={() => removeScanRealm(i)} className="opacity-60 hover:text-[var(--danger)]">
+                    <button title="单独写入当前书" onClick={() => applyScanRealm(i)} className="opacity-70 hover:opacity-100">
+                      <Plus size={11} />
+                    </button>
+                    <button title="移除这一条" onClick={() => removeScanRealm(i)} className="opacity-60 hover:text-[var(--danger)]">
                       <X size={11} />
                     </button>
                   </span>
@@ -229,7 +257,22 @@ export default function ImportView() {
                     <span className="w-16 shrink-0 t3">{it.category}</span>
                     <span className="w-20 shrink-0 truncate t3">{it.grade || '—'}</span>
                     <span className="min-w-0 flex-1 truncate t2">{it.effect || '—'}</span>
-                    <button className="shrink-0 t3 hover:text-[var(--danger)]" onClick={() => removeScanItem(i)}>
+                    <button
+                      className="shrink-0 t3 hover:text-[var(--text)]"
+                      title="复制这一条"
+                      onClick={() => {
+                        void navigator.clipboard.writeText(
+                          `${it.name}(${it.category}${it.grade ? ' · ' + it.grade : ''}):${it.effect || ''}`
+                        )
+                        showToast('已复制')
+                      }}
+                    >
+                      <Clipboard size={12} />
+                    </button>
+                    <button className="shrink-0 t3 hover:text-[var(--accent)]" title="单独写入当前书" onClick={() => applyScanItem(i)}>
+                      <Plus size={12} />
+                    </button>
+                    <button className="shrink-0 t3 hover:text-[var(--danger)]" title="移除这一条" onClick={() => removeScanItem(i)}>
                       <Trash2 size={12} />
                     </button>
                   </div>
@@ -238,7 +281,7 @@ export default function ImportView() {
             </div>
 
             <div>
-              <label className="field-label">人物({r.characters.length} 位,写入人物卡)</label>
+              <label className="field-label">人物({r.characters.length} 位,写入人物卡;+ 号单条导入)</label>
               <div className="flex flex-wrap gap-1.5">
                 {r.characters.length === 0 && <span className="text-xs t3">未提取到</span>}
                 {r.characters.map((c, i) => (
@@ -249,7 +292,10 @@ export default function ImportView() {
                   >
                     {c.name}
                     {c.role && <span className="t3">({c.role})</span>}
-                    <button onClick={() => removeScanCharacter(i)} className="t3 hover:text-[var(--danger)]">
+                    <button title="单独写入当前书" onClick={() => applyScanCharacter(i)} className="opacity-70 hover:opacity-100">
+                      <Plus size={11} />
+                    </button>
+                    <button title="移除这一条" onClick={() => removeScanCharacter(i)} className="t3 hover:text-[var(--danger)]">
                       <X size={11} />
                     </button>
                   </span>

@@ -237,18 +237,33 @@ body {
   background: var(--accent-soft);
 }
 
-/* ---------------- 左侧导航栏 ---------------- */
+/* ---------------- 左侧导航栏 ----------------
+   默认 56px 仅图标;hover 展开至 180px 露出文字标签 */
 .rail {
   width: 56px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   gap: 4px;
   padding: 10px 0 12px;
   background: var(--panel);
   border-right: 1px solid var(--border);
   user-select: none;
+  overflow: hidden;
+  transition: width 0.2s ease;
+}
+.rail:hover {
+  width: 180px;
+}
+/* 文字标签:收起时隐藏,展开淡入 */
+.rail .rail-label {
+  opacity: 0;
+  white-space: nowrap;
+  transition: opacity 0.15s ease;
+}
+.rail:hover .rail-label {
+  opacity: 1;
 }
 
 /* 朱砂印章 Logo */
@@ -270,14 +285,25 @@ body {
 
 .rail-btn {
   position: relative;
-  width: 40px;
-  height: 40px;
+  width: auto;
+  height: 38px;
+  margin: 0 8px;
+  padding: 0 12px;
   border-radius: 10px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  gap: 10px;
+  flex-shrink: 0;
   color: var(--t3);
   transition: background-color 0.15s, color 0.15s;
+}
+.rail-btn svg {
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+.rail-btn:hover svg {
+  transform: scale(1.05);
 }
 .rail-btn:hover {
   background: var(--panel-2);
@@ -287,35 +313,21 @@ body {
   background: var(--accent-soft);
   color: var(--accent);
 }
-/* 激活态左侧朱砂竖标 */
+/* 激活态:导航最左侧 4px 朱砂竖标 */
 .rail-btn.active::before {
   content: "";
   position: absolute;
   left: -8px;
-  top: 10px;
-  bottom: 10px;
-  width: 3px;
+  top: 9px;
+  bottom: 9px;
+  width: 4px;
   border-radius: 2px;
   background: var(--accent);
 }
-
-/* 图标+文字组合的导航按钮(四大工作区):提高页面辨识度 */
-.rail-btn.labeled {
-  width: 50px;
-  height: auto;
-  flex-direction: column;
-  gap: 3px;
-  padding: 7px 0 6px;
-}
 .rail-btn.labeled .rail-label {
-  font-size: 10px;
-  line-height: 1;
-  letter-spacing: 0.04em;
-}
-.rail-btn.labeled.active::before {
-  left: -3px;
-  top: 8px;
-  bottom: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
 }
 
 /* 未开书时置灰:禁用态连 hover 底色都不该亮,避免看起来像能点 */
@@ -390,6 +402,11 @@ body {
   padding: 1rem;
   background: var(--backdrop);
   backdrop-filter: blur(3px);
+  animation: modal-fade 0.2s ease;
+}
+@keyframes modal-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 .modal-card {
   background: var(--panel);
@@ -405,4 +422,22 @@ body {
 }
 .fade-up {
   animation: fade-up 0.18s ease-out;
+}
+
+/* 页面切换淡入(挂在工作区容器上,按 mode 重新挂载触发) */
+@keyframes view-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.view-fade {
+  animation: view-fade 0.2s ease;
+}
+
+/* 设定卡片 hover 微上浮:轻反馈,不抢正文视觉 */
+.panel {
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+.panel.card-lift:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(80, 60, 30, 0.14);
 }

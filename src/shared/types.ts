@@ -28,6 +28,19 @@ export interface Character {
   background: string
   arc: string
   notes: string
+  /** 外貌特征(可选) */
+  appearance?: string
+  /** 能力/特长(可选) */
+  abilities?: string
+  /** 人物关系(可选),如:林家堡主之女,与主角亦敌亦友 */
+  relations?: string
+}
+
+/** 一条伏笔:逐条记录,可标记已回收/待回收 */
+export interface Foreshadow {
+  id: string
+  text: string
+  resolved: boolean
 }
 
 export interface Worldview {
@@ -40,6 +53,8 @@ export interface Worldview {
   /** 势力与阵营 */
   factions: string
   notes: string
+  /** 伏笔清单(可选):逐条记录,避免挖坑不填 */
+  foreshadows?: Foreshadow[]
 }
 
 /** 物品/材料卡:武器、丹药、阵法、功法、科技造物、魔法物品等 */

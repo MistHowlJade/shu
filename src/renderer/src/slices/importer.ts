@@ -46,6 +46,10 @@ export interface ImporterSlice {
   removeScanRealm: (index: number) => void
   removeScanItem: (index: number) => void
   removeScanCharacter: (index: number) => void
+  /** 单条导入:把某一条扫描结果单独写进当前书(自动去重) */
+  applyScanRealm: (index: number) => void
+  applyScanItem: (index: number) => void
+  applyScanCharacter: (index: number) => void
   updateScanWorldview: (text: string) => void
   applyScanToBook: () => Promise<void>
 }
@@ -346,6 +350,67 @@ export function importerSlice({ set, get }: SliceCtx): ImporterSlice {
         characters.splice(index, 1)
         return { importer: { ...s.importer, results: { ...s.importer.results, characters } } }
       }),
+
+    applyScanRealm: (index) => {
+      const realm = get().importer.results.realms[index]
+      if (!realm) return
+      if (get().book?.worldview.powerSystem.includes(realm)) {
+        get().showToast(`「${realm}」已在境界体系中`, 'error')
+        return
+      }
+      void persist((draft) => {
+        if (draft.worldview.powerSystem.includes(realm)) return
+        draft.worldview.powerSystem = draft.worldview.powerSystem.trim()
+          ? draft.worldview.powerSystem.trim() + ' → ' + realm
+          : realm
+      }).then(() => get().showToast(`已写入境界:${realm}`))
+    },
+
+    applyScanItem: (index) => {
+      const it = get().importer.results.items[index]
+      if (!it) return
+      if (get().book?.items.some((x) => x.name.trim() === it.name)) {
+        get().showToast(`「${it.name}」已在物品图鉴中`, 'error')
+        return
+      }
+      void persist((draft) => {
+        if (draft.items.some((x) => x.name.trim() === it.name)) return
+        draft.items.push({
+          id: uid(),
+          name: it.name,
+          category: it.category,
+          grade: it.grade,
+          appearance: '',
+          effect: it.effect,
+          origin: it.origin,
+          location: it.location,
+          owner: '',
+          stage: '扫书导入',
+          notes: ''
+        })
+      }).then(() => get().showToast(`已写入物品:${it.name}`))
+    },
+
+    applyScanCharacter: (index) => {
+      const c = get().importer.results.characters[index]
+      if (!c) return
+      if (get().book?.characters.some((x) => x.name.trim() === c.name)) {
+        get().showToast(`「${c.name}」已在人物卡中`, 'error')
+        return
+      }
+      void persist((draft) => {
+        if (draft.characters.some((x) => x.name.trim() === c.name)) return
+        draft.characters.push({
+          id: uid(),
+          name: c.name,
+          role: c.role || '扫书导入',
+          personality: '',
+          background: '',
+          arc: '',
+          notes: ''
+        })
+      }).then(() => get().showToast(`已写入人物:${c.name}`))
+    },
 
     updateScanWorldview: (text) =>
       set((s) => ({ importer: { ...s.importer, results: { ...s.importer.results, worldviewText: text } } })),

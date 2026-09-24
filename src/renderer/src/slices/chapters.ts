@@ -22,6 +22,8 @@ export interface ChaptersSlice {
   renameChapter: (title: string) => void
   setOutline: (text: string) => void
   createChapter: (volumeId: string) => Promise<void>
+  /** 复制章节:新建「标题 副本」并带过正文(不含状态与摘要) */
+  duplicateChapter: (id: string) => Promise<void>
   deleteChapter: (id: string) => Promise<void>
   moveChapter: (id: string, offset: -1 | 1) => Promise<void>
   cycleChapterStatus: (id: string) => Promise<void>
@@ -74,12 +76,16 @@ export function chaptersSlice({ set, get }: SliceCtx): ChaptersSlice {
       const { bookDir, chapter, content } = get()
       if (!bookDir || !chapter) return
       const payload: Chapter = { ...chapter, content }
-      const { chapter: saved, meta } = await window.api.chapters.save(bookDir, payload)
-      set((state) => {
-        if (!state.book) return {}
-        const chapters = state.book.chapters.map((c) => (c.id === meta.id ? meta : c))
-        return { chapter: { ...saved, content: state.content }, book: { ...state.book, chapters }, dirty: false, savedAt: Date.now() }
-      })
+      try {
+        const { chapter: saved, meta } = await window.api.chapters.save(bookDir, payload)
+        set((state) => {
+          if (!state.book) return {}
+          const chapters = state.book.chapters.map((c) => (c.id === meta.id ? meta : c))
+          return { chapter: { ...saved, content: state.content }, book: { ...state.book, chapters }, dirty: false, savedAt: Date.now() }
+        })
+      } catch (err) {
+        get().showToast(`保存失败:${err instanceof Error ? err.message : String(err)}`, 'error')
+      }
     },
 
     renameChapter: (title) => {
@@ -102,6 +108,25 @@ export function chaptersSlice({ set, get }: SliceCtx): ChaptersSlice {
       )
       set((state) => (state.book ? { book: { ...state.book, chapters: [...state.book.chapters, meta] } } : {}))
       await get().selectChapter(chapter.id)
+    },
+
+    duplicateChapter: async (id) => {
+      const { bookDir, book } = get()
+      if (!bookDir || !book) return
+      const meta = book.chapters.find((c) => c.id === id)
+      if (!meta) return
+      const src = await window.api.chapters.read(bookDir, id)
+      const created = await window.api.chapters.create(bookDir, meta.volumeId, `${meta.title} 副本`)
+      /* 正文非空才落盘,并把真实字数元数据同步回内存副本 */
+      if (src && src.content.trim()) {
+        const { meta: newMeta } = await window.api.chapters.save(bookDir, { ...created.chapter, content: src.content })
+        set((state) =>
+          state.book
+            ? { book: { ...state.book, chapters: state.book.chapters.map((c) => (c.id === newMeta.id ? newMeta : c)) } }
+            : {}
+        )
+      }
+      get().showToast('已复制章节')
     },
 
     deleteChapter: async (id) => {

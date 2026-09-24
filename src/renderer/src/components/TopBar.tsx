@@ -1,12 +1,13 @@
 import { Maximize2, Search } from 'lucide-react'
 import { totalWords, useStore } from '../store'
+import type { WorkspaceMode } from '../store'
 
-const MODE_TITLE: Record<string, string> = {
-  write: '写作',
-  codex: '设定中心',
-  outline: '大纲规划',
-  import: '拆书扫书'
-}
+const MODES: { id: WorkspaceMode; label: string }[] = [
+  { id: 'write', label: '写作' },
+  { id: 'codex', label: '设定中心' },
+  { id: 'outline', label: '大纲规划' },
+  { id: 'import', label: '拆书扫书' }
+]
 
 /**
  * 书籍上下文条:书名(宋体)+ 当前模式 + 沉浸模式/命令面板入口。
@@ -15,6 +16,7 @@ const MODE_TITLE: Record<string, string> = {
 export default function TopBar() {
   const book = useStore((s) => s.book)
   const workspaceMode = useStore((s) => s.workspaceMode)
+  const setWorkspaceMode = useStore((s) => s.setWorkspaceMode)
   const setFocusMode = useStore((s) => s.setFocusMode)
   const setPaletteOpen = useStore((s) => s.setPaletteOpen)
 
@@ -30,14 +32,28 @@ export default function TopBar() {
       <h1 className="serif min-w-0 truncate text-[15px] font-semibold" title={book.title}>
         《{book.title}》
       </h1>
-      <span className="hidden shrink-0 text-xs t3 md:inline">
+      <span className="hidden shrink-0 text-xs t3 lg:inline">
         {book.genre} · 已完成 {doneCount}/{book.chapters.length} 章 · {totalWords(book).toLocaleString('zh-CN')} 字
       </span>
 
-      <span className="mx-auto flex items-center gap-1.5 rounded-full px-3 py-1 text-xs t3" style={{ background: 'var(--panel-2)' }}>
-        <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: 'var(--accent)' }} />
-        {MODE_TITLE[workspaceMode] ?? ''}
-      </span>
+      {/* 页面标签:与左侧导航联动同步高亮 */}
+      <div className="mx-auto flex shrink-0 items-center gap-0.5 rounded-full p-1" style={{ background: 'var(--panel-2)' }}>
+        {MODES.map(({ id, label }) => {
+          const active = workspaceMode === id
+          return (
+            <button
+              key={id}
+              className={`rounded-full px-3 py-1 text-xs transition ${
+                active ? 'font-semibold' : 't3 hover:text-[var(--text)]'
+              }`}
+              style={active ? { background: 'var(--panel)', color: 'var(--accent)', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' } : undefined}
+              onClick={() => setWorkspaceMode(id)}
+            >
+              {label}
+            </button>
+          )
+        })}
+      </div>
 
       <button
         className="btn-ghost !px-2 !text-xs"

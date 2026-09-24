@@ -20,7 +20,7 @@ function CharacterCard({ character }: { character: Character }) {
   }
 
   return (
-    <div className="panel mb-2 overflow-hidden">
+    <div className="panel card-lift mb-2 overflow-hidden">
       <div className="flex items-center gap-1 px-2 py-1.5">
         <button className="rounded p-0.5 t3" onClick={() => setExpanded(!expanded)}>
           {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
@@ -57,6 +57,27 @@ function CharacterCard({ character }: { character: Character }) {
             onChange={(e) => void updateCharacter(character.id, { personality: e.target.value })}
             onBlur={persist}
             placeholder="性格特点(如:腹黑毒舌,护短,睚眦必报)"
+          />
+          <textarea
+            className="field-input min-h-12 resize-y !py-1.5 !text-xs"
+            value={character.appearance ?? ''}
+            onChange={(e) => void updateCharacter(character.id, { appearance: e.target.value })}
+            onBlur={persist}
+            placeholder="外貌特征(身形、着装、标志性特征)"
+          />
+          <textarea
+            className="field-input min-h-12 resize-y !py-1.5 !text-xs"
+            value={character.abilities ?? ''}
+            onChange={(e) => void updateCharacter(character.id, { abilities: e.target.value })}
+            onBlur={persist}
+            placeholder="能力/特长(功法、异能、擅长领域)"
+          />
+          <textarea
+            className="field-input min-h-12 resize-y !py-1.5 !text-xs"
+            value={character.relations ?? ''}
+            onChange={(e) => void updateCharacter(character.id, { relations: e.target.value })}
+            onBlur={persist}
+            placeholder="人物关系(与主角/各方势力的羁绊)"
           />
           <textarea
             className="field-input min-h-14 resize-y !py-1.5 !text-xs"

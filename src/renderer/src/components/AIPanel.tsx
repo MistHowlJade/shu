@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ChevronDown, ChevronRight, Clipboard, Copy, CornerDownLeft, Eraser, Highlighter, Loader2, MessageCircle, RefreshCw, Send, Square, Users, Wand2 } from 'lucide-react'
+import { ChevronDown, ChevronRight, Clipboard, Copy, CornerDownLeft, Eraser, Highlighter, Loader2, MessageCircle, RefreshCw, Send, Settings, Square, Users, Wand2 } from 'lucide-react'
 import { totalWords, useStore } from '../store'
 import { activeProfile } from '@shared/types'
 import type { GenerateKind } from '@shared/types'
@@ -45,6 +45,7 @@ export default function AIPanel() {
   const clearAiOutput = useStore((s) => s.clearAiOutput)
   const setSettingsOpen = useStore((s) => s.setSettingsOpen)
   const setWorkspaceMode = useStore((s) => s.setWorkspaceMode)
+  const updateSettings = useStore((s) => s.updateSettings)
   const runAutoWrite = useStore((s) => s.runAutoWrite)
   const stopAutoWrite = useStore((s) => s.stopAutoWrite)
   const sendInspire = useStore((s) => s.sendInspire)
@@ -60,6 +61,7 @@ export default function AIPanel() {
   const [autoCount, setAutoCount] = useState(3)
   /* 前情摘要属低频操作,默认折叠减少界面静态信息 */
   const [summaryOpen, setSummaryOpen] = useState(false)
+  const [profileMenu, setProfileMenu] = useState(false)
   const chatScrollRef = useRef<HTMLDivElement>(null)
 
   /* 新消息/流式输出时,对话区自动滚到底 */
@@ -121,19 +123,56 @@ export default function AIPanel() {
       className="flex h-full flex-col overflow-auto p-4 pr-10"
       style={{ background: 'var(--panel)', borderLeft: '1px solid var(--border)' }}
     >
-      {/* 模块 1:标题区(14px 加粗,模型信息降为 12px 辅助级) */}
+      {/* 模块 1:标题区(14px 加粗;模型名下拉即时切换,右侧入口进设置管理) */}
       <div className="mb-3 flex items-center gap-2">
         <span className="serif text-sm font-bold tracking-[0.2em]">AI 助 手</span>
-        <span className="h-3.5 w-px shrink-0" style={{ background: 'var(--border-strong)' }} />
-        <span
-          className="min-w-0 truncate text-xs font-medium"
-          style={{ color: 'var(--accent-ink)' }}
-          title={profile.name || profile.model || '未配置'}
+        <div className="relative min-w-0">
+          <button
+            className="flex min-w-0 items-center gap-1 text-xs font-medium accent"
+            title="切换模型配置(选择后即时生效)"
+            onClick={() => setProfileMenu((v) => !v)}
+          >
+            <span className="truncate">{profile.name || profile.model || '未配置'}</span>
+            <ChevronDown size={12} className="shrink-0" />
+          </button>
+          {profileMenu && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setProfileMenu(false)} />
+              <div className="panel absolute left-0 top-6 z-20 w-56 p-1" style={{ boxShadow: 'var(--shadow)' }}>
+                {settings.ai.profiles.map((p) => (
+                  <button
+                    key={p.id}
+                    className="palette-item"
+                    data-active={p.id === settings.ai.activeProfileId}
+                    onClick={() => {
+                      void updateSettings({ ai: { ...settings.ai, activeProfileId: p.id } })
+                      setProfileMenu(false)
+                      showToast(`已切换到「${p.name}」`)
+                    }}
+                  >
+                    <span className="min-w-0 flex-1 truncate">{p.name}</span>
+                    <span className="shrink-0 text-[11px] t3">{p.model}</span>
+                  </button>
+                ))}
+                <button
+                  className="palette-item"
+                  onClick={() => {
+                    setProfileMenu(false)
+                    setSettingsOpen(true)
+                  }}
+                >
+                  <Settings size={14} />
+                  管理配置…
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+        <button
+          className="ml-auto shrink-0 text-xs t3 transition hover:text-[var(--text)]"
+          onClick={() => setSettingsOpen(true)}
         >
-          {profile.name || profile.model || '未配置'}
-        </span>
-        <button className="ml-auto shrink-0 text-xs accent hover:underline" onClick={() => setSettingsOpen(true)}>
-          更换
+          设置
         </button>
       </div>
 
@@ -496,7 +535,19 @@ export default function AIPanel() {
             color: 'var(--danger)'
           }}
         >
-          {aiError}
+          <div className="flex items-center gap-2">
+            <span className="min-w-0 flex-1">{aiError}</span>
+            {aiLastKind && !aiRunning && (
+              <button
+                className="btn-outline shrink-0 !py-1 !text-xs"
+                title={`重新执行「${KIND_LABEL[aiLastKind]}」`}
+                onClick={() => void runGenerate(aiLastKind)}
+              >
+                <RefreshCw size={12} />
+                重试
+              </button>
+            )}
+          </div>
         </div>
       )}
 

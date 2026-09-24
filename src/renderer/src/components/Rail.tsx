@@ -41,21 +41,26 @@ export default function Rail() {
 
   return (
     <nav className="rail">
-      <div className="seal" title={`AI 网文工作台${book ? ` · ${totalWords(book).toLocaleString('zh-CN')} 字` : ''}`}>
-        著
+      {/* 印章 Logo + 应用名(hover 展开时露出) */}
+      <div className="flex shrink-0 items-center gap-2.5" style={{ margin: '0 8px 8px 11px' }}>
+        <div className="seal !m-0" title={`AI 网文工作台${book ? ` · ${totalWords(book).toLocaleString('zh-CN')} 字` : ''}`}>
+          著
+        </div>
+        <span className="rail-label serif text-xs font-bold tracking-wider">网文工作台</span>
       </div>
 
       <button
-        className={`rail-btn ${inLibrary ? 'active' : ''}`}
+        className={`rail-btn labeled ${inLibrary ? 'active' : ''}`}
         title="书库"
         onClick={() => {
           if (!inLibrary) void backToLibrary()
         }}
       >
-        <BookOpen size={18} />
+        <BookOpen size={17} />
+        <span className="rail-label">书库</span>
       </button>
 
-      <div className="my-1 h-px w-6" style={{ background: 'var(--border-strong)' }} />
+      <div className="mx-auto my-1 h-px w-6 shrink-0" style={{ background: 'var(--border-strong)' }} />
 
       {MODES.map(({ id, label, icon: Icon, kbd }) => (
         <button
@@ -74,23 +79,27 @@ export default function Rail() {
 
       <div className="flex-1" />
 
-      <button className="rail-btn" title="命令面板 (Ctrl+K)" onClick={() => setPaletteOpen(true)}>
-        <Command size={17} />
+      <button className="rail-btn labeled" title="命令面板 (Ctrl+K)" onClick={() => setPaletteOpen(true)}>
+        <Command size={16} />
+        <span className="rail-label">命令面板</span>
       </button>
       {book && (
-        <button className="rail-btn" title="导出全书 TXT" onClick={() => void exportTxt()}>
-          <Download size={17} />
+        <button className="rail-btn labeled" title="导出全书 TXT" onClick={() => void exportTxt()}>
+          <Download size={16} />
+          <span className="rail-label">导出 TXT</span>
         </button>
       )}
       <button
-        className="rail-btn"
+        className="rail-btn labeled"
         title={theme === 'dark' ? '切到浅色(白日书房)' : '切到深色(夜间书房)'}
         onClick={() => void updateSettings({ theme: theme === 'dark' ? 'light' : 'dark' })}
       >
-        {theme === 'dark' ? <Sun size={17} /> : <Moon size={17} />}
+        {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+        <span className="rail-label">{theme === 'dark' ? '浅色模式' : '深色模式'}</span>
       </button>
-      <button className="rail-btn" title="设置" onClick={() => setSettingsOpen(true)}>
-        <Settings size={17} />
+      <button className="rail-btn labeled" title="设置" onClick={() => setSettingsOpen(true)}>
+        <Settings size={16} />
+        <span className="rail-label">设置</span>
       </button>
     </nav>
   )

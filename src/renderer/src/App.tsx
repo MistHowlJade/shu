@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { PanelRightClose, PanelRightOpen } from 'lucide-react'
 import { useStore } from './store'
 import type { WorkspaceMode } from './store'
 import LibraryView from './components/LibraryView'
@@ -9,6 +10,7 @@ import WriteView from './components/WriteView'
 import CodexView from './components/CodexView'
 import OutlineView from './components/OutlineView'
 import ImportView from './components/ImportView'
+import AIPanel from './components/AIPanel'
 import SettingsModal from './components/SettingsModal'
 import CreateBookModal from './components/CreateBookModal'
 import HistoryModal from './components/HistoryModal'
@@ -22,6 +24,9 @@ const MODE_KEYS: Record<string, WorkspaceMode> = {
   '4': 'import'
 }
 
+const MIN_AI_WIDTH = 300
+const MAX_AI_WIDTH = 720
+
 export default function App() {
   const ready = useStore((s) => s.ready)
   const view = useStore((s) => s.view)
@@ -32,6 +37,42 @@ export default function App() {
 
   /* 沉浸写作:仅写作页生效(提前算好,下面的悬浮条效果要用) */
   const focus = focusMode && view === 'workspace' && workspaceMode === 'write'
+
+  /* AI 助手面板:全局右栏,跨页面不重置;宽度与收起状态记忆到 localStorage */
+  const [aiOpen, setAiOpen] = useState(() => localStorage.getItem('aiPanelOpen') !== '0')
+  const [aiWidth, setAiWidth] = useState(() => {
+    const saved = Number(localStorage.getItem('aiPanelWidth'))
+    return saved >= MIN_AI_WIDTH && saved <= MAX_AI_WIDTH ? saved : 384
+  })
+  const widthRef = useRef(aiWidth)
+  widthRef.current = aiWidth
+
+  const toggleAi = (): void => {
+    setAiOpen((v) => {
+      localStorage.setItem('aiPanelOpen', v ? '0' : '1')
+      return !v
+    })
+  }
+
+  const onDragStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    const startX = e.clientX
+    const startWidth = widthRef.current
+    const onMove = (ev: MouseEvent) => {
+      const next = Math.min(MAX_AI_WIDTH, Math.max(MIN_AI_WIDTH, startWidth + (startX - ev.clientX)))
+      widthRef.current = next
+      setAiWidth(next)
+    }
+    const onUp = () => {
+      localStorage.setItem('aiPanelWidth', String(widthRef.current))
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+      document.body.style.cursor = ''
+    }
+    document.body.style.cursor = 'col-resize'
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+  }, [])
 
   /* 沉浸模式悬浮条:鼠标一动就浮现,静止 1.8 秒后自动隐去,绝不压着正文 */
   const [pillOn, setPillOn] = useState(false)
@@ -58,7 +99,7 @@ export default function App() {
     void init()
   }, [init])
 
-  /* 全局快捷键:Ctrl+K 命令面板 / Ctrl+S 保存 / Ctrl+Enter 生成整章 / Ctrl+1..4 切页 / Esc 逐层退出 */
+  /* 全局快捷键:Ctrl+K 命令面板 / Ctrl+S 保存 / Ctrl+Enter 生成整章 / Ctrl+1..4 切页 / F11 沉浸 / Esc 逐层退出 */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       /* 组件内已处理的快捷键(命令面板、聊天输入等)不冒泡到全局 */
@@ -91,6 +132,13 @@ export default function App() {
           e.preventDefault()
           s.setWorkspaceMode(MODE_KEYS[e.key])
         }
+        return
+      }
+      /* F11 备选:写作页切换沉浸模式 */
+      if (e.key === 'F11') {
+        e.preventDefault()
+        const s = useStore.getState()
+        if (s.view === 'workspace' && s.workspaceMode === 'write') s.setFocusMode(!s.focusMode)
         return
       }
       if (e.key === 'Escape') {
@@ -138,9 +186,11 @@ export default function App() {
         ) : (
           <>
             {!focus && <TopBar />}
-            {/* 分页面配色:设定=青灰 / 大纲=蓝灰 / 拆书=棕灰,一眼识别当前功能区;写作页保持暖米白基底 */}
+            {/* 分页面配色 + 切换淡入:设定=青灰 / 大纲=蓝灰 / 拆书=棕灰;写作页保持暖米白基底。
+                按 mode 重新挂载触发淡入;AI 面板在容器外,跨页面内容不重置 */}
             <div
-              className="flex min-h-0 flex-1 flex-col overflow-hidden"
+              key={workspaceMode}
+              className="view-fade flex min-h-0 flex-1 flex-col overflow-hidden"
               style={{
                 background: workspaceMode !== 'write' ? `var(--tint-${workspaceMode})` : undefined,
                 transition: 'background-color 0.25s ease'
@@ -173,6 +223,41 @@ export default function App() {
           </div>
         )}
       </div>
+
+      {/* 全局右栏:AI 助手(四大页面共用,收起后留窄条入口;沉浸模式下隐藏) */}
+      {view === 'workspace' && !focus && (
+        <>
+          {aiOpen ? (
+            <>
+              {/* AI 面板拖宽手柄 */}
+              <div
+                className="w-1 shrink-0 cursor-col-resize bg-transparent transition hover:bg-[var(--accent-soft)]"
+                onMouseDown={onDragStart}
+                title="拖动调整 AI 面板宽度"
+              />
+              <div className="relative shrink-0" style={{ width: aiWidth }}>
+                <button
+                  className="btn-ghost absolute right-2 top-2 z-10 !px-2"
+                  title="收起 AI 助手面板"
+                  onClick={toggleAi}
+                >
+                  <PanelRightClose size={16} />
+                </button>
+                <AIPanel />
+              </div>
+            </>
+          ) : (
+            <button
+              className="flex w-9 shrink-0 items-center justify-center"
+              style={{ background: 'var(--panel)', borderLeft: '1px solid var(--border)' }}
+              title="展开 AI 助手面板"
+              onClick={toggleAi}
+            >
+              <PanelRightOpen size={16} />
+            </button>
+          )}
+        </>
+      )}
 
       <CommandPalette />
       <SettingsModal />

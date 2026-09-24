@@ -33,7 +33,7 @@ function ItemCard({ item }: { item: ItemEntry }) {
   const subtitle = [item.category, item.grade].filter(Boolean).join(' · ')
 
   return (
-    <div className="panel mb-2 overflow-hidden">
+    <div className="panel card-lift mb-2 overflow-hidden">
       <div className="flex items-center gap-1 px-2 py-1.5">
         <button className="rounded p-0.5 t3" onClick={() => setExpanded(!expanded)}>
           {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}

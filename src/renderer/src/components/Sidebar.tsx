@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowDown, ArrowUp, ChevronDown, ChevronRight, PanelLeftClose, Plus, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, ChevronDown, ChevronRight, Copy, PanelLeftClose, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useStore } from '../store'
 import type { ChapterStatus } from '@shared/types'
 
@@ -19,15 +19,32 @@ export default function Sidebar({ onCollapse }: { onCollapse?: () => void }) {
   const updateVolume = useStore((s) => s.updateVolume)
   const removeVolume = useStore((s) => s.removeVolume)
   const addVolume = useStore((s) => s.addVolume)
+  const duplicateChapter = useStore((s) => s.duplicateChapter)
+  const updateBook = useStore((s) => s.updateBook)
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
+  /* 右键菜单与行内重命名状态 */
+  const [menu, setMenu] = useState<{ x: number; y: number; id: string } | null>(null)
+  const [renamingId, setRenamingId] = useState<string | null>(null)
+  const [renameDraft, setRenameDraft] = useState('')
+
+  function submitRename(id: string): void {
+    const title = renameDraft.trim()
+    setRenamingId(null)
+    if (!title) return
+    void updateBook((draft) => {
+      const meta = draft.chapters.find((c) => c.id === id)
+      if (meta) meta.title = title
+    })
+  }
 
   if (!book) return null
 
   return (
-    <aside
-      className="flex w-64 shrink-0 flex-col"
-      style={{ background: 'var(--panel)', borderRight: '1px solid var(--border)' }}
-    >
+    <>
+      <aside
+        className="flex w-64 shrink-0 flex-col"
+        style={{ background: 'var(--panel)', borderRight: '1px solid var(--border)' }}
+      >
       <div className="flex shrink-0 items-center gap-1.5 px-3 pb-1 pt-3">
         <span className="serif text-[11px] font-semibold tracking-[0.25em] t3">目 录</span>
         <span className="t3 text-[11px]">{book.chapters.length} 章</span>
@@ -97,6 +114,10 @@ export default function Sidebar({ onCollapse }: { onCollapse?: () => void }) {
                           if (!active) e.currentTarget.style.background = ''
                         }}
                         onClick={() => void selectChapter(meta.id)}
+                        onContextMenu={(e) => {
+                          e.preventDefault()
+                          setMenu({ x: e.clientX, y: e.clientY, id: meta.id })
+                        }}
                       >
                         {active && (
                           <span
@@ -116,7 +137,24 @@ export default function Sidebar({ onCollapse }: { onCollapse?: () => void }) {
                         >
                           第{index}章
                         </span>
-                        <span className="min-w-0 flex-1 truncate">{meta.title}</span>
+                        {renamingId === meta.id ? (
+                          /* 行内重命名:回车/失焦提交,Esc 取消 */
+                          <input
+                            autoFocus
+                            className="serif min-w-0 flex-1 rounded bg-[var(--panel-2)] px-1 text-sm outline-none"
+                            value={renameDraft}
+                            onChange={(e) => setRenameDraft(e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => {
+                              e.stopPropagation()
+                              if (e.key === 'Enter') submitRename(meta.id)
+                              if (e.key === 'Escape') setRenamingId(null)
+                            }}
+                            onBlur={() => submitRename(meta.id)}
+                          />
+                        ) : (
+                          <span className="min-w-0 flex-1 truncate">{meta.title}</span>
+                        )}
                         <span className="hidden shrink-0 items-center group-hover:flex">
                           <button
                             className="rounded p-0.5 t3 hover:text-[var(--accent)]"
@@ -167,6 +205,63 @@ export default function Sidebar({ onCollapse }: { onCollapse?: () => void }) {
           新增一卷
         </button>
       </div>
-    </aside>
+      </aside>
+
+      {/* 章节右键菜单:重命名 / 复制 / 删除 */}
+      {menu && (
+        <>
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setMenu(null)}
+            onContextMenu={(e) => {
+              e.preventDefault()
+              setMenu(null)
+            }}
+          />
+          <div
+            className="panel fixed z-50 w-36 p-1"
+            style={{
+              left: Math.min(menu.x, window.innerWidth - 160),
+              top: Math.min(menu.y, window.innerHeight - 140),
+              boxShadow: 'var(--shadow)'
+            }}
+          >
+            <button
+              className="palette-item"
+              onClick={() => {
+                setRenamingId(menu.id)
+                setRenameDraft(book.chapters.find((c) => c.id === menu.id)?.title ?? '')
+                setMenu(null)
+              }}
+            >
+              <Pencil size={14} />
+              重命名
+            </button>
+            <button
+              className="palette-item"
+              onClick={() => {
+                void duplicateChapter(menu.id)
+                setMenu(null)
+              }}
+            >
+              <Copy size={14} />
+              复制章节
+            </button>
+            <button
+              className="palette-item"
+              style={{ color: 'var(--danger)' }}
+              onClick={() => {
+                const meta = book.chapters.find((c) => c.id === menu.id)
+                if (meta && window.confirm(`确定删除「${meta.title}」吗?`)) void deleteChapter(menu.id)
+                setMenu(null)
+              }}
+            >
+              <Trash2 size={14} />
+              删除章节
+            </button>
+          </div>
+        </>
+      )}
+    </>
   )
 }
