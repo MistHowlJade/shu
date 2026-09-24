@@ -50,10 +50,9 @@ export default function Editor() {
 
   if (!book || !chapter) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-2.5" style={{ background: 'var(--editor)' }}>
-        {/* 空白画布要"安静":印章缩小降透明,只做轻装饰,焦点交给右侧操作面板 */}
-        <div className="seal !m-0 !h-9 !w-9 !text-lg opacity-40">著</div>
-        <p className="serif text-sm font-medium t2">选择或新建一个章节,开始铺纸落笔</p>
+      <div className="flex flex-1 flex-col items-center justify-center gap-2" style={{ background: 'var(--editor)' }}>
+        {/* 空状态:仅两行文字,主提示 + 浅灰辅助,无图形装饰 */}
+        <p className="text-sm font-medium t2">选择或新建一个章节,开始写稿</p>
         <p className="text-xs t3">左侧目录选章 · 右侧「AI 助手」可生成初稿</p>
       </div>
     )
@@ -69,7 +68,7 @@ export default function Editor() {
       >
         <div className="measure flex w-full items-center gap-3 px-1">
           <input
-            className="serif min-w-0 flex-1 bg-transparent text-xl font-semibold outline-none"
+            className="min-w-0 flex-1 bg-transparent text-base font-semibold outline-none"
             style={{ color: 'var(--text)' }}
             value={chapter.title}
             onChange={(e) => renameChapter(e.target.value)}
@@ -96,8 +95,8 @@ export default function Editor() {
       </div>
       <textarea
         ref={textareaRef}
-        className="serif measure min-h-0 w-full flex-1 resize-none bg-transparent px-1 py-6 text-[17px] leading-[1.95] outline-none"
-        style={{ color: 'var(--text)', caretColor: 'var(--accent)' }}
+        className="measure min-h-0 w-full flex-1 resize-none bg-transparent px-1 py-6 text-[15px] leading-[1.9] outline-none"
+        style={{ color: 'var(--t2)', caretColor: 'var(--accent)' }}
         value={content}
         placeholder={'在这里写作,或用右侧「AI 助手」生成初稿。\n\n· 光标停在任意位置,点「从光标续写」接着写\n· 写完一章点「前情摘要」,长篇不断片'}
         onChange={(e) => setContent(e.target.value)}

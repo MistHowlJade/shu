@@ -114,9 +114,9 @@ export default function OutlineView() {
 
   return (
     <div className="min-h-0 flex-1 overflow-auto p-4">
-      {/* 简介 + 风格 */}
+      {/* 简介 + 风格:各自独立白卡 */}
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-        <div>
+        <div className="panel p-3">
           <label className="field-label">全书简介(AI 了解主线的第一入口)</label>
           <textarea
             className="field-input min-h-28 resize-y"
@@ -125,7 +125,7 @@ export default function OutlineView() {
             onBlur={() => void updateBook(() => undefined)}
           />
         </div>
-        <div>
+        <div className="panel p-3">
           <label className="field-label">写作风格指令(发给 AI 的 system prompt)</label>
           <textarea
             className="field-input min-h-28 resize-y font-mono !text-xs"

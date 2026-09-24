@@ -47,9 +47,9 @@ export default function ImportView() {
   }
 
   return (
-    <div className="flex min-h-0 flex-1">
-      {/* 左:来源与控制 */}
-      <div className="flex w-[30rem] shrink-0 flex-col overflow-auto p-4" style={{ borderRight: '1px solid var(--border)' }}>
+    <div className="flex min-h-0 flex-1 gap-3 p-3">
+      {/* 左:来源与控制(独立白卡) */}
+      <div className="panel flex w-[30rem] shrink-0 flex-col overflow-auto p-4">
         <div className="flex items-center gap-2">
           <FileSearch size={16} className="accent" />
           <h2 className="serif text-sm font-semibold tracking-wider">拆书扫书 · 把任意小说文本拆成设定</h2>
@@ -181,7 +181,7 @@ export default function ImportView() {
         )}
       </div>
 
-      {/* 右:扫描结果 */}
+      {/* 右:扫描结果(独立白卡) */}
       <div className="flex min-w-0 flex-1 flex-col overflow-auto p-4">
         <div className="flex items-center justify-between">
           <h2 className="serif text-sm font-semibold tracking-wider">扫描结果</h2>

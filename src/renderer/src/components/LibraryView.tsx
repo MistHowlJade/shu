@@ -23,18 +23,11 @@ export default function LibraryView() {
   return (
     <div className="h-full overflow-auto">
       <div className="mx-auto max-w-5xl px-10 py-12">
-        {/* 书斋题头 */}
+        {/* 顶部:22px 大标题 + 右侧辅助小字;右上角幽灵按钮组 + 主按钮 */}
         <div className="mb-10 flex items-end justify-between gap-6">
-          <div>
-            <div className="flex items-center gap-3">
-              <div className="seal !m-0 !h-11 !w-11 !text-2xl">著</div>
-              <div>
-                <h1 className="serif text-3xl font-bold tracking-wide">AI 网文工作台</h1>
-                <p className="mt-1 text-sm t2">
-                  <span className="serif">「铺纸 · 研墨 · 落笔」</span> · AI 辅助长篇中文小说创作 · 本地存储 · 支持任意大模型
-                </p>
-              </div>
-            </div>
+          <div className="flex min-w-0 items-baseline gap-3">
+            <h1 className="shrink-0 text-[22px] font-semibold leading-tight">AI 网文工作台</h1>
+            <p className="min-w-0 truncate text-xs t3">AI 辅助长篇中文小说创作 · 本地存储 · 支持任意大模型</p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <button className="btn-outline" onClick={() => void changeLibraryRoot()}>
@@ -61,11 +54,11 @@ export default function LibraryView() {
         </div>
 
         {books.length === 0 ? (
-          <div className="panel flex flex-col items-center gap-4 py-24 text-center">
-            <div className="seal !m-0 !h-14 !w-14 !text-3xl opacity-60">著</div>
-            <p className="serif text-xl">书案还空着</p>
-            <p className="max-w-md text-sm t2">
-              点击「新建书籍」铺开第一张纸。书籍数据保存在本地{' '}
+          <div className="panel flex flex-col items-center gap-3 py-24 text-center">
+            {/* 空状态:仅文字,无图形装饰 */}
+            <p className="text-base font-medium t2">还没有书籍</p>
+            <p className="max-w-md text-xs t3">
+              点击右上角「新建书籍」开始创作。书籍数据保存在本地{' '}
               <code className="rounded px-1 py-0.5 text-xs" style={{ background: 'var(--panel-2)' }}>
                 {settings.libraryRoot || '文档/AINovelStudio'}
               </code>{' '}
@@ -77,57 +70,51 @@ export default function LibraryView() {
             {books.map(({ dir, book, broken }) => (
               <div
                 key={dir}
-                className="group relative cursor-pointer overflow-hidden rounded-xl p-5 transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow)]"
-                style={{
-                  background: 'var(--panel)',
-                  border: `1px solid ${broken ? 'var(--danger)' : 'var(--border)'}`
-                }}
+                className="panel card-lift group relative cursor-pointer overflow-hidden p-5"
+                style={{ borderColor: broken ? 'var(--danger)' : undefined }}
                 onClick={() => void openBookAt(dir)}
               >
-                {/* 封面顶端朱砂书签条 */}
-                <span
-                  className="absolute right-4 top-0 h-8 w-1.5 rounded-b transition-all group-hover:h-12"
-                  style={{ background: 'var(--accent)' }}
-                />
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className="serif line-clamp-2 text-lg font-bold leading-snug" title={book.title}>
-                    《{book.title}》
+                  <h3 className="line-clamp-2 text-lg font-semibold leading-snug" title={book.title}>
+                    {book.title}
                   </h3>
                   {broken && (
                     <span
                       className="shrink-0 rounded px-1.5 py-0.5 text-[11px] font-medium"
-                      style={{ background: 'color-mix(in srgb, var(--danger) 12%, transparent)', color: 'var(--danger)' }}
+                      style={{ background: 'color-mix(in srgb, var(--danger) 10%, transparent)', color: 'var(--danger)' }}
                     >
                       文件损坏
                     </span>
                   )}
-                  <button
-                    className="shrink-0 rounded p-1 t3 opacity-0 transition hover:text-[var(--accent)] group-hover:opacity-100"
-                    title="立即备份这本书(完整复制到 _backups 目录)"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      void backupBook(dir)
-                    }}
-                  >
-                    <Archive size={15} />
-                  </button>
-                  <button
-                    className="shrink-0 rounded p-1 t3 opacity-0 transition hover:text-[var(--danger)] group-hover:opacity-100"
-                    title="删除书籍(移入回收站)"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      if (window.confirm(`确定删除《${book.title}》吗?书籍文件将移入回收站。`)) {
-                        void removeBook(dir)
-                      }
-                    }}
-                  >
-                    <Trash2 size={15} />
-                  </button>
+                  <span className="flex shrink-0 items-center">
+                    <button
+                      className="rounded p-1 t3 opacity-0 transition hover:text-[var(--text)] group-hover:opacity-100"
+                      title="立即备份这本书(完整复制到 _backups 目录)"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        void backupBook(dir)
+                      }}
+                    >
+                      <Archive size={15} />
+                    </button>
+                    <button
+                      className="rounded p-1 t3 opacity-0 transition hover:text-[var(--danger)] group-hover:opacity-100"
+                      title="删除书籍(移入回收站)"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (window.confirm(`确定删除《${book.title}》吗?书籍文件将移入回收站。`)) {
+                          void removeBook(dir)
+                        }
+                      }}
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                  </span>
                 </div>
-                <p className="mt-0.5 text-xs t3">
+                <p className="mt-1 text-xs t3">
                   {book.author || '未署名'} · {book.genre}
                 </p>
-                <p className="serif mt-3 line-clamp-2 min-h-10 text-sm leading-relaxed t2">
+                <p className="mt-3 line-clamp-2 min-h-10 text-[13px] leading-relaxed t2">
                   {book.description || '（暂无简介）'}
                 </p>
                 <div

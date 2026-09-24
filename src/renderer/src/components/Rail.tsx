@@ -1,4 +1,5 @@
 import {
+  BookMarked,
   BookOpen,
   Command,
   Download,
@@ -10,7 +11,7 @@ import {
   Sun,
   Vault
 } from 'lucide-react'
-import { totalWords, useStore } from '../store'
+import { useStore } from '../store'
 import type { WorkspaceMode } from '../store'
 
 /** 工作区模式导航(需先打开一本书) */
@@ -41,12 +42,10 @@ export default function Rail() {
 
   return (
     <nav className="rail">
-      {/* 印章 Logo + 应用名(hover 展开时露出) */}
+      {/* 线性品牌标 + 应用名(hover 展开时露出) */}
       <div className="flex shrink-0 items-center gap-2.5" style={{ margin: '0 8px 8px 11px' }}>
-        <div className="seal !m-0" title={`AI 网文工作台${book ? ` · ${totalWords(book).toLocaleString('zh-CN')} 字` : ''}`}>
-          著
-        </div>
-        <span className="rail-label serif text-xs font-bold tracking-wider">网文工作台</span>
+        <BookMarked size={18} className="shrink-0 accent" />
+        <span className="rail-label text-xs font-semibold tracking-wide">网文工作台</span>
       </div>
 
       <button

@@ -50,7 +50,7 @@ export default function StatusBar() {
 
   return (
     <div
-      className="flex h-7 shrink-0 items-center gap-4 px-4 text-xs t3"
+      className="flex h-7 shrink-0 items-center gap-4 px-4 text-[11px] t3"
       style={{ borderTop: '1px solid var(--border)', background: 'var(--panel)' }}
     >
       {(aiRunning || autoWrite?.running) && (

@@ -186,16 +186,8 @@ export default function App() {
         ) : (
           <>
             {!focus && <TopBar />}
-            {/* 分页面配色 + 切换淡入:设定=青灰 / 大纲=蓝灰 / 拆书=棕灰;写作页保持暖米白基底。
-                按 mode 重新挂载触发淡入;AI 面板在容器外,跨页面内容不重置 */}
-            <div
-              key={workspaceMode}
-              className="view-fade flex min-h-0 flex-1 flex-col overflow-hidden"
-              style={{
-                background: workspaceMode !== 'write' ? `var(--tint-${workspaceMode})` : undefined,
-                transition: 'background-color 0.25s ease'
-              }}
-            >
+            {/* 页面切换淡入(冷灰规范:全站统一 --bg 底,层次靠白卡与阴影);AI 面板在容器外,跨页面内容不重置 */}
+            <div key={workspaceMode} className="view-fade flex min-h-0 flex-1 flex-col overflow-hidden">
               {workspaceMode === 'write' && <WriteView />}
               {workspaceMode === 'codex' && <CodexView />}
               {workspaceMode === 'outline' && <OutlineView />}

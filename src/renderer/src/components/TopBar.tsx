@@ -36,20 +36,24 @@ export default function TopBar() {
         {book.genre} · 已完成 {doneCount}/{book.chapters.length} 章 · {totalWords(book).toLocaleString('zh-CN')} 字
       </span>
 
-      {/* 页面标签:与左侧导航联动同步高亮 */}
-      <div className="mx-auto flex shrink-0 items-center gap-0.5 rounded-full p-1" style={{ background: 'var(--panel-2)' }}>
+      {/* 页面标签:主色文字 + 底部细下划线,与左侧导航联动同步高亮 */}
+      <div className="mx-auto flex shrink-0 items-center gap-1 self-stretch">
         {MODES.map(({ id, label }) => {
           const active = workspaceMode === id
           return (
             <button
               key={id}
-              className={`rounded-full px-3 py-1 text-xs transition ${
+              className={`relative flex h-full items-center px-3 text-[13px] transition ${
                 active ? 'font-semibold' : 't3 hover:text-[var(--text)]'
               }`}
-              style={active ? { background: 'var(--panel)', color: 'var(--accent)', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' } : undefined}
+              style={active ? { color: 'var(--accent)' } : undefined}
               onClick={() => setWorkspaceMode(id)}
             >
               {label}
+              <span
+                className="absolute inset-x-2.5 bottom-0 h-0.5 rounded-full"
+                style={{ background: active ? 'var(--accent)' : 'transparent' }}
+              />
             </button>
           )
         })}

@@ -3,69 +3,67 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ================================================================
-   沉浸式写作舱 · 纸墨设计系统
-   浅色 = 白天书房(宣纸),深色 = 夜间书房(墨夜)
-   正文与标题走宋体衬线,界面控件走系统无衬线
+   AI 网文工作台 · UI 设计规范 V1.0
+   冷灰现代工具风(Linear/Figma 质感):冷灰底 + 纯白卡片 + 主色点缀
+   层次依靠留白 + 阴影;色彩仅用于重点交互;长期写作低疲劳
+   全文无衬线(Inter 优先,思源黑体兜底);圆角统一 8px
    ================================================================ */
 
 :root {
-  /* 纸面 */
-  --bg: #f4efe4;                /* 应用底:宣纸 */
-  --panel: #fffdf7;             /* 面板:白宣 */
-  --panel-2: #f8f3e8;           /* 内嵌区:浅麻 */
-  --editor: #fbf7ed;            /* 正文画布:暖白 */
-  --border: #e7dfcd;            /* 发丝线 */
-  --border-strong: #d8ccb4;     /* 强调分隔 */
-  /* 墨色 */
-  --text: #2d2922;
-  --t2: #6d6558;
-  --t3: #9b9284;
-  --faint: #b9b1a2;
-  /* 朱砂 */
-  --accent: #b23a2a;
-  --accent-hover: #993123;
-  --accent-soft: rgba(178, 58, 42, 0.09);
-  --accent-ink: #8f2e21;        /* 软底上的朱砂文字 */
-  --danger: #b3261e;
-  --ok: #3d7a4e;
-  --warn: #9a6a15;
-  --shadow: 0 10px 30px -12px rgba(80, 60, 30, 0.25);
-  --shadow-card: 0 1px 3px rgba(80, 60, 30, 0.07);
-  --ring: rgba(178, 58, 42, 0.25);
-  --backdrop: rgba(45, 36, 22, 0.42);
-  /* 分页面底色:设定=浅青灰(资料库)/ 大纲=浅蓝灰(规划)/ 拆书=浅棕灰(对标);写作页用暖米白基底不另调 */
-  --tint-codex: #ebf2ef;
-  --tint-outline: #ebf0f6;
-  --tint-import: #f0ebdf;
-  --font-serif: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong", "SimSun", Georgia, serif;
-  --font-ui: system-ui, "Microsoft YaHei", "PingFang SC", sans-serif;
+  /* 基础色 */
+  --bg: #f7f8fa;                /* 页面背景:极浅冷灰 */
+  --panel: #ffffff;             /* 卡片/面板/输入容器:纯白 */
+  --panel-2: #f2f4f7;           /* 内嵌区/悬浮填充:极浅灰 */
+  --editor: #ffffff;            /* 正文画布:纯白 */
+  --border: #e4e7ec;            /* 分割线 */
+  --border-strong: #d0d5dd;     /* 输入框 hover 边框/强调分隔 */
+  /* 灰阶文本 */
+  --text: #1d2939;              /* 一级正文(标题/主文本) */
+  --t2: #475467;                /* 二级正文 */
+  --t3: #98a2b3;                /* 辅助小字/占位 */
+  --faint: #c6ccd6;             /* 更弱:禁用点/装饰 */
+  /* 主强调色(仅重点交互) */
+  --accent: #9c433c;
+  --accent-hover: #86352f;
+  --accent-soft: rgba(156, 67, 60, 0.08);
+  --accent-ink: #86352f;        /* 软底上的主色文字 */
+  --danger: #d92d20;
+  --ok: #12805c;
+  --warn: #b54708;
+  /* 阴影 */
+  --shadow: 0 12px 34px -14px rgba(16, 24, 40, 0.25);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-hover: 0 3px 8px rgba(0, 0, 0, 0.08);
+  --ring: rgba(156, 67, 60, 0.16);
+  --backdrop: rgba(16, 24, 40, 0.3);
+  /* 字体:无衬线,.serif 类名保留但映射为同一无衬线族,避免全量改组件 */
+  --font-ui: Inter, "Source Han Sans SC", "Noto Sans SC", system-ui, "Microsoft YaHei", "PingFang SC", sans-serif;
+  --font-serif: Inter, "Source Han Sans SC", "Noto Sans SC", system-ui, "Microsoft YaHei", "PingFang SC", sans-serif;
 }
 
 .dark {
-  --bg: #16130f;
-  --panel: #201c16;
-  --panel-2: #27221b;
-  --editor: #1b1712;
-  --border: #352f26;
-  --border-strong: #4b4235;
-  --text: #ece5d6;
-  --t2: #aaa091;
-  --t3: #7f7667;
-  --faint: #5e574c;
-  --accent: #d4674d;
-  --accent-hover: #e07a61;
-  --accent-soft: rgba(212, 103, 77, 0.14);
-  --accent-ink: #e58a72;
+  --bg: #0f1216;
+  --panel: #171a20;
+  --panel-2: #1e222a;
+  --editor: #13161b;
+  --border: #272c35;
+  --border-strong: #3a4150;
+  --text: #e8ebf0;
+  --t2: #a6adb8;
+  --t3: #767e8a;
+  --faint: #4a5160;
+  --accent: #c9665e;
+  --accent-hover: #d67a72;
+  --accent-soft: rgba(201, 102, 94, 0.14);
+  --accent-ink: #e09189;
   --danger: #e0655c;
   --ok: #74b083;
   --warn: #c69a45;
   --shadow: 0 12px 34px -14px rgba(0, 0, 0, 0.6);
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.35);
-  --ring: rgba(212, 103, 77, 0.3);
-  --backdrop: rgba(8, 6, 3, 0.55);
-  --tint-codex: #18211d;
-  --tint-outline: #171d27;
-  --tint-import: #201c13;
+  --shadow-hover: 0 3px 8px rgba(0, 0, 0, 0.45);
+  --ring: rgba(201, 102, 94, 0.25);
+  --backdrop: rgba(5, 8, 12, 0.55);
 }
 
 html,
@@ -86,7 +84,12 @@ body {
   background: var(--accent-soft);
 }
 
-/* 宋体衬线:书名、章节标题、正文、区块标题 */
+/* 线性细线条图标:统一 1.5px 线宽(覆盖 lucide 默认 2px) */
+svg {
+  stroke-width: 1.5px;
+}
+
+/* 文字衬线类名(历史命名):V1.0 起映射为全局无衬线 */
 .serif {
   font-family: var(--font-serif);
 }
@@ -101,7 +104,7 @@ body {
   border-radius: 4px;
 }
 *::-webkit-scrollbar-thumb:hover {
-  background: var(--faint);
+  background: var(--t3);
 }
 *::-webkit-scrollbar-track {
   background: transparent;
@@ -114,25 +117,25 @@ body {
 .ok { color: var(--ok); }
 .danger { color: var(--danger); }
 
-/* ---------------- 表面 ---------------- */
+/* ---------------- 表面:白卡浮于冷灰底 ---------------- */
 .panel {
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 8px;
   box-shadow: var(--shadow-card);
+  transition: box-shadow 0.15s ease;
 }
 .inset {
   background: var(--panel-2);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  box-shadow: var(--shadow-card);
+  border-radius: 8px;
 }
 
-/* ---------------- 输入控件 ---------------- */
+/* ---------------- 输入控件:默认无边框,hover 细灰边,focus 主色外发光 ---------------- */
 .field-input {
   width: 100%;
-  border-radius: 9px;
-  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  border: 1px solid transparent;
   background: var(--panel);
   color: var(--text);
   padding: 0.5rem 0.75rem;
@@ -141,11 +144,19 @@ body {
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 .field-input::placeholder {
-  color: var(--faint);
+  color: var(--t3);
+}
+.field-input:hover:not(:focus) {
+  border-color: var(--border-strong);
 }
 .field-input:focus {
-  border-color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border-strong));
   box-shadow: 0 0 0 3px var(--ring);
+}
+/* 内嵌灰底上的输入框:白底自然浮出 */
+.inset .field-input,
+.panel-2-bg .field-input {
+  background: var(--panel);
 }
 
 .field-label {
@@ -157,8 +168,8 @@ body {
   letter-spacing: 0.02em;
 }
 
-/* ---------------- 按钮 ----------------
-   视觉层次:P1 实色主按钮(一屏唯一) > P2 朱砂描边 > P3 灰描边(悬停变红) > ghost */
+/* ---------------- 按钮:主色实底 / 白色幽灵 / 主色描边点缀 ----------------
+   P1 主按钮(一屏唯一) > P2 主色描边 > 幽灵 > ghost */
 .btn,
 .btn-primary,
 .btn-secondary,
@@ -169,11 +180,11 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.375rem;
-  border-radius: 9px;
+  border-radius: 8px;
   padding: 0.375rem 0.75rem;
   font-size: 0.875rem;
   font-weight: 500;
-  transition: background-color 0.15s, color 0.15s, border-color 0.15s, transform 0.1s;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
   cursor: pointer;
 }
 .btn:disabled,
@@ -185,23 +196,18 @@ body {
   cursor: not-allowed;
   opacity: 0.45;
 }
-.btn-primary:active:not(:disabled),
-.btn-secondary:active:not(:disabled),
-.btn-outline:active:not(:disabled) {
-  transform: translateY(1px);
-}
 
 .btn-primary {
   background: var(--accent);
-  color: #fffdf7;
+  color: #ffffff;
 }
 .btn-primary:hover:not(:disabled) {
   background: var(--accent-hover);
 }
 
-/* P2 次级:白底 + 细朱砂描边,视觉重量约为主按钮一半 */
+/* P2 次级强调:主色细描边,色彩仅作点缀 */
 .btn-secondary {
-  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border-strong));
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border-strong));
   background: var(--panel);
   color: var(--accent-ink);
 }
@@ -219,26 +225,27 @@ body {
   color: var(--text);
 }
 
+/* 幽灵按钮(白底灰字):hover 填充极浅灰 */
 .btn-outline {
-  border: 1px solid var(--border-strong);
+  border: 1px solid transparent;
   background: var(--panel);
   color: var(--t2);
 }
 .btn-outline:hover:not(:disabled) {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: var(--accent-soft);
+  background: var(--panel-2);
+  color: var(--text);
 }
 
-/* 处于激活态的描边按钮(如已展开的抽屉) */
-.btn-outline.active {
-  border-color: var(--accent);
-  color: var(--accent);
+/* 激活态(如已展开的抽屉/选中的分段项):主色软底 */
+.btn-outline.active,
+.btn-secondary.active {
   background: var(--accent-soft);
+  color: var(--accent-ink);
+  border-color: transparent;
 }
 
 /* ---------------- 左侧导航栏 ----------------
-   默认 56px 仅图标;hover 展开至 180px 露出文字标签 */
+   默认 56px 仅图标;hover 展开至 180px 露出文字标签;白底 + 基础阴影 */
 .rail {
   width: 56px;
   flex-shrink: 0;
@@ -249,6 +256,7 @@ body {
   padding: 10px 0 12px;
   background: var(--panel);
   border-right: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
   user-select: none;
   overflow: hidden;
   transition: width 0.2s ease;
@@ -266,30 +274,13 @@ body {
   opacity: 1;
 }
 
-/* 朱砂印章 Logo */
-.seal {
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
-  background: var(--accent);
-  color: #fffdf7;
-  font-family: var(--font-serif);
-  font-size: 19px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: inset 0 0 0 1.5px rgba(255, 253, 247, 0.35);
-  margin-bottom: 8px;
-}
-
 .rail-btn {
   position: relative;
   width: auto;
   height: 38px;
   margin: 0 8px;
   padding: 0 12px;
-  border-radius: 10px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -313,15 +304,15 @@ body {
   background: var(--accent-soft);
   color: var(--accent);
 }
-/* 激活态:导航最左侧 4px 朱砂竖标 */
+/* 激活态:导航最左侧 2px 主色细竖线 */
 .rail-btn.active::before {
   content: "";
   position: absolute;
   left: -8px;
   top: 9px;
   bottom: 9px;
-  width: 4px;
-  border-radius: 2px;
+  width: 2px;
+  border-radius: 1px;
   background: var(--accent);
 }
 .rail-btn.labeled .rail-label {
@@ -350,7 +341,7 @@ body {
   color: var(--text);
 }
 .palette-input::placeholder {
-  color: var(--faint);
+  color: var(--t3);
 }
 .palette-item {
   display: flex;
@@ -378,14 +369,14 @@ body {
   line-height: 1;
   padding: 3px 5px;
   border-radius: 5px;
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border);
   background: var(--panel-2);
   color: var(--t3);
   white-space: nowrap;
 }
 
 /* ---------------- 沉浸模式 ---------------- */
-/* 沉浸模式下正文的纸面宽度:一行约 34~38 个汉字,最耐读 */
+/* 正文的纸面宽度:一行约 34~38 个汉字,最耐读 */
 .measure {
   max-width: 42rem;
   margin-inline: auto;
@@ -411,7 +402,7 @@ body {
 .modal-card {
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: 8px;
   box-shadow: var(--shadow);
 }
 
@@ -433,11 +424,7 @@ body {
   animation: view-fade 0.2s ease;
 }
 
-/* 设定卡片 hover 微上浮:轻反馈,不抢正文视觉 */
-.panel {
-  transition: box-shadow 0.15s ease, transform 0.15s ease;
-}
+/* 卡片 hover:阴影切换为悬浮增强阴影,柔和过渡,无位移 */
 .panel.card-lift:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 3px 10px rgba(80, 60, 30, 0.14);
+  box-shadow: var(--shadow-hover);
 }
