@@ -33,7 +33,24 @@ npm run dev        # 开发模式启动
 npm run dist       # 打包 Windows 安装包(release/ 目录)
 ```
 
-> 本项目开发时使用的是绿色版 Node.js(`D:\项目\tools\nodejs`),系统 PATH 中若无 node,请先 `set "PATH=D:\项目\tools\nodejs;%PATH%"`。
+> 本项目开发时使用的是绿色版 Node.js(仓库内 `tools/nodejs`,版本 v22),系统 PATH 中若无 node,请先 `set "PATH=D:\项目\shu\tools\nodejs;%PATH%"`。
+
+### 开发与测试
+
+```bash
+npm run typecheck  # TypeScript 类型检查(含 tests/)
+npm test           # vitest 单元测试(切段/JSON 解析/存储/扫书状态机/store 切片)
+npm run build      # 主/preload/renderer 三端产物(out/ 目录)
+```
+
+CI(GitHub Actions)对每次推送运行 typecheck + test + build;打 `v*` tag 时自动打包并发布 Release。
+
+### 清理与卸载
+
+本项目所有依赖与工具链都在项目文件夹内(`node_modules`、绿色版 `tools/nodejs`),**删除项目文件夹即可完全移除**,不残留系统级配置。应用产生的用户数据在以下两处,卸载后如不再需要请手动删除:
+
+- 书库与书籍备份:默认 `文档\AINovelStudio\`(可在应用设置中自定义位置)
+- 应用设置(含 safeStorage 加密的 API Key):`%APPDATA%\ai-novel-studio\settings.json`
 
 ### 配置 AI 模型(必须)
 
@@ -83,6 +100,10 @@ src/
     context-builder.ts  # 前情记忆:上下文组装与预算裁剪
   preload/index.ts      # contextBridge API
   renderer/src/         # React 界面(三栏布局)
+    store.ts            # 状态入口:组合 slices/ 六个领域切片
+    slices/             # base 骨架 / chapters 章节 / codex 设定 / ai 生成 / inspire 陪聊 / importer 扫书
+tests/                  # vitest 单元测试
+tools/nodejs/           # 绿色版 Node(v22),仅供本仓库开发使用
 ```
 
 ## 数据格式
