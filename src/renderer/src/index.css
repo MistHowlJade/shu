@@ -146,9 +146,11 @@ body {
   letter-spacing: 0.02em;
 }
 
-/* ---------------- 按钮 ---------------- */
+/* ---------------- 按钮 ----------------
+   视觉层次:P1 实色主按钮(一屏唯一) > P2 朱砂描边 > P3 灰描边(悬停变红) > ghost */
 .btn,
 .btn-primary,
+.btn-secondary,
 .btn-ghost,
 .btn-outline,
 .btn-accent-soft {
@@ -165,6 +167,7 @@ body {
 }
 .btn:disabled,
 .btn-primary:disabled,
+.btn-secondary:disabled,
 .btn-ghost:disabled,
 .btn-outline:disabled,
 .btn-accent-soft:disabled {
@@ -172,6 +175,7 @@ body {
   opacity: 0.45;
 }
 .btn-primary:active:not(:disabled),
+.btn-secondary:active:not(:disabled),
 .btn-outline:active:not(:disabled) {
   transform: translateY(1px);
 }
@@ -182,6 +186,17 @@ body {
 }
 .btn-primary:hover:not(:disabled) {
   background: var(--accent-hover);
+}
+
+/* P2 次级:白底 + 细朱砂描边,视觉重量约为主按钮一半 */
+.btn-secondary {
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border-strong));
+  background: var(--panel);
+  color: var(--accent-ink);
+}
+.btn-secondary:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .btn-ghost {

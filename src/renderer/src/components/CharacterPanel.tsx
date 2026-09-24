@@ -109,7 +109,7 @@ export default function CharacterPanel() {
             <Sparkles size={13} />
             AI起名
           </button>
-          <button className="btn-primary !px-2 !py-1 !text-xs" onClick={() => void addCharacter()}>
+          <button className="btn-secondary !px-2 !py-1 !text-xs" onClick={() => void addCharacter()}>
             <Plus size={13} />
             添加
           </button>

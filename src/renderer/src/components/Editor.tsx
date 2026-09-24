@@ -50,9 +50,11 @@ export default function Editor() {
 
   if (!book || !chapter) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-3 t3" style={{ background: 'var(--editor)' }}>
-        <div className="seal !m-0 !h-12 !w-12 !text-2xl">著</div>
-        <p className="serif text-sm">选择或新建一个章节,开始铺纸落笔</p>
+      <div className="flex flex-1 flex-col items-center justify-center gap-2.5" style={{ background: 'var(--editor)' }}>
+        {/* 空白画布要"安静":印章缩小降透明,只做轻装饰,焦点交给右侧操作面板 */}
+        <div className="seal !m-0 !h-9 !w-9 !text-lg opacity-40">著</div>
+        <p className="serif text-sm font-medium t2">选择或新建一个章节,开始铺纸落笔</p>
+        <p className="text-xs t3">左侧目录选章 · 右侧「AI 助手」可生成初稿</p>
       </div>
     )
   }

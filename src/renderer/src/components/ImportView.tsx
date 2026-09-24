@@ -174,7 +174,7 @@ export default function ImportView() {
         <div className="flex items-center justify-between">
           <h2 className="serif text-sm font-semibold tracking-wider">扫描结果</h2>
           <button
-            className="btn-primary !px-3 !py-1.5 !text-xs"
+            className="btn-secondary !px-3 !py-1.5 !text-xs"
             disabled={analyzing || !hasResults}
             onClick={() => void applyScanToBook()}
             title="把勾选结果写入当前打开的书(自动去重)"

@@ -109,7 +109,13 @@ export default function Sidebar({ onCollapse }: { onCollapse?: () => void }) {
                           style={STATUS_META[meta.status].dot}
                           title={STATUS_META[meta.status].label}
                         />
-                        <span className="shrink-0 text-xs t3">第{index}章</span>
+                        {/* 激活项整行进朱砂色系,未激活序号保持灰色,拉开主次 */}
+                        <span
+                          className="shrink-0 text-xs"
+                          style={active ? { color: 'var(--accent-ink)', opacity: 0.72 } : { color: 'var(--t3)' }}
+                        >
+                          第{index}章
+                        </span>
                         <span className="min-w-0 flex-1 truncate">{meta.title}</span>
                         <span className="hidden shrink-0 items-center group-hover:flex">
                           <button

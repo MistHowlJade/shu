@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Clipboard, Copy, CornerDownLeft, Eraser, Loader2, MessageCircle, RefreshCw, Send, Square, Wand2 } from 'lucide-react'
+import { ChevronDown, ChevronRight, Clipboard, Copy, CornerDownLeft, Eraser, Loader2, MessageCircle, RefreshCw, Send, Square, Wand2 } from 'lucide-react'
 import { totalWords, useStore } from '../store'
 import { activeProfile } from '@shared/types'
 import type { GenerateKind } from '@shared/types'
@@ -57,6 +57,8 @@ export default function AIPanel() {
   )
   const [ask, setAsk] = useState('')
   const [autoCount, setAutoCount] = useState(3)
+  /* 前情摘要属低频操作,默认折叠减少界面静态信息 */
+  const [summaryOpen, setSummaryOpen] = useState(false)
   const chatScrollRef = useRef<HTMLDivElement>(null)
 
   /* 新消息/流式输出时,对话区自动滚到底 */
@@ -118,13 +120,18 @@ export default function AIPanel() {
       className="flex h-full flex-col overflow-auto p-4 pr-10"
       style={{ background: 'var(--panel)', borderLeft: '1px solid var(--border)' }}
     >
-      <div className="mb-3 flex items-center gap-1.5 text-xs t3">
-        <span className="serif tracking-[0.2em]">AI 助 手</span>
-        <span className="mx-1 h-3 w-px" style={{ background: 'var(--border-strong)' }} />
-        <span className="truncate font-medium" style={{ color: 'var(--accent-ink)' }}>
+      {/* 模块 1:标题区(14px 加粗,模型信息降为 12px 辅助级) */}
+      <div className="mb-3 flex items-center gap-2">
+        <span className="serif text-sm font-bold tracking-[0.2em]">AI 助 手</span>
+        <span className="h-3.5 w-px shrink-0" style={{ background: 'var(--border-strong)' }} />
+        <span
+          className="min-w-0 truncate text-xs font-medium"
+          style={{ color: 'var(--accent-ink)' }}
+          title={profile.name || profile.model || '未配置'}
+        >
           {profile.name || profile.model || '未配置'}
         </span>
-        <button className="ml-auto shrink-0 accent hover:underline" onClick={() => setSettingsOpen(true)}>
+        <button className="ml-auto shrink-0 text-xs accent hover:underline" onClick={() => setSettingsOpen(true)}>
           更换
         </button>
       </div>
@@ -152,66 +159,99 @@ export default function AIPanel() {
         {tabBtn('chat', '灵感', MessageCircle)}
       </div>
 
-      {/* ============ 生成模式 ============ */}
+      {/* ============ 生成模式(模块化分组:核心 → 辅助 → 低频) ============ */}
       {tab === 'gen' && (
         <>
-          <label className="field-label">本章写作意图(可选,Ctrl+Enter 快速生成整章)</label>
-          <textarea
-            className="field-input min-h-16 resize-y"
-            placeholder="例如:主角当众被退婚,结尾亮出神秘底牌震惊全场"
-            value={aiIntent}
-            onChange={(e) => setAiIntent(e.target.value)}
-            onKeyDown={(e) => {
-              if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !disabled) {
-                e.preventDefault()
-                void runGenerate('chapter')
-              }
-            }}
-          />
-
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            <button className="btn-primary" disabled={disabled} onClick={() => void runGenerate('chapter')} title="按本章细纲 + 前情摘要生成整章初稿">
-              <Wand2 size={14} />
-              生成整章
-            </button>
+          {/* 模块 2:本章意图 + 生成整章 —— 核心操作,留白最多,P1 唯一实色按钮 */}
+          <div>
+            <label className="field-label">本章写作意图(可选)</label>
+            <textarea
+              className="field-input min-h-16 resize-y"
+              placeholder="例如:主角当众被退婚,结尾亮出神秘底牌震惊全场"
+              value={aiIntent}
+              onChange={(e) => setAiIntent(e.target.value)}
+              onKeyDown={(e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !disabled) {
+                  e.preventDefault()
+                  void runGenerate('chapter')
+                }
+              }}
+            />
             <button
-              className="btn-primary"
-              disabled={disabled || !content.trim()}
-              onClick={() => void runGenerate('continue')}
-              title="从光标位置接着写(未定位光标则从章末续)"
+              className="btn-primary mt-2.5 w-full !py-2.5"
+              disabled={disabled}
+              onClick={() => void runGenerate('chapter')}
+              title="按本章细纲 + 前情摘要生成整章初稿"
             >
-              <Wand2 size={14} />
-              从光标续写
+              <Wand2 size={15} />
+              <span className="text-sm font-semibold tracking-wide">生成整章</span>
             </button>
-            <button
-              className="btn-outline"
-              disabled={disabled || !hasSelection}
-              title={hasSelection ? '润色选中的文字' : '先在正文中选中一段文字'}
-              onClick={() => void runGenerate('polish')}
-            >
-              <Wand2 size={14} />
-              润色选中
-            </button>
-            <button className="btn-outline" disabled={disabled} onClick={() => void runGenerate('outline')} title="生成本章情节细纲">
-              <RefreshCw size={14} />
-              本章细纲
-            </button>
-            <button
-              className="btn-outline col-span-2"
-              disabled={disabled || !content.trim()}
-              onClick={() => void runGenerate('summary')}
-              title="浓缩本章为前情摘要,写完一章后点一次,长篇不断片"
-            >
-              <RefreshCw size={14} />
-              生成前情摘要(写完本章后点)
-            </button>
+            <p className="mt-1.5 px-0.5 text-[11px] t3">Ctrl+Enter 快速生成 · 结合细纲、前情摘要与设定集成稿</p>
           </div>
 
-          {/* 自动连写 */}
-          <div
-            className="mt-3 rounded-lg p-2.5"
-            style={{ background: 'var(--accent-soft)', border: '1px solid var(--border)' }}
-          >
+          {/* 模块 3:章节辅助操作(P2 续写朱砂描边 / P3 润色细纲灰描边),浅卡片归组 */}
+          <div className="mt-6">
+            <div className="mb-1.5 px-0.5 text-xs font-semibold t2">章节辅助</div>
+            <div className="inset flex flex-col gap-1.5 p-1.5">
+              <button
+                className="btn-secondary w-full !py-1.5 !text-xs"
+                disabled={disabled || !content.trim()}
+                onClick={() => void runGenerate('continue')}
+                title="从光标位置接着写(未定位光标则从章末续)"
+              >
+                <Wand2 size={13} />
+                从光标续写
+              </button>
+              <button
+                className="btn-outline w-full !py-1.5 !text-xs"
+                disabled={disabled || !hasSelection}
+                title={hasSelection ? '润色选中的文字' : '先在正文中选中一段文字'}
+                onClick={() => void runGenerate('polish')}
+              >
+                <Wand2 size={13} />
+                润色选中
+              </button>
+              <button
+                className="btn-outline w-full !py-1.5 !text-xs"
+                disabled={disabled}
+                onClick={() => void runGenerate('outline')}
+                title="生成本章情节细纲"
+              >
+                <RefreshCw size={13} />
+                本章细纲
+              </button>
+            </div>
+          </div>
+
+          {/* 模块 4:前情摘要 —— 低频,默认折叠 */}
+          <div className="mt-6">
+            <button
+              className="flex w-full items-center gap-1 rounded px-0.5 py-0.5 text-xs font-semibold t2 transition hover:text-[var(--text)]"
+              onClick={() => setSummaryOpen((v) => !v)}
+              title="展开/收起前情摘要"
+            >
+              {summaryOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+              前情摘要
+              <span className="truncate font-normal t3">写完本章后点一次,长篇不断片</span>
+            </button>
+            {summaryOpen && (
+              <div className="mt-1.5">
+                <button
+                  className="btn-outline w-full !py-1.5 !text-xs"
+                  disabled={disabled || !content.trim()}
+                  onClick={() => void runGenerate('summary')}
+                  title="浓缩本章为前情摘要,写完一章后点一次,长篇不断片"
+                >
+                  <RefreshCw size={13} />
+                  生成前情摘要
+                </button>
+                <p className="mt-1.5 px-0.5 text-[11px] t3">摘要写入本章后,后续章节自动携带;同时本章新设定会自动入库。</p>
+              </div>
+            )}
+          </div>
+
+          {/* 模块 5:自动连写 —— 参数化低频操作,单独小卡,缩小视觉占比 */}
+          <div className="inset mt-6 p-2.5">
             {autoWrite?.running ? (
               <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--accent-ink)' }}>
                 <Loader2 size={14} className="shrink-0 animate-spin" />
@@ -225,9 +265,7 @@ export default function AIPanel() {
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <span className="shrink-0 text-xs font-medium" style={{ color: 'var(--accent-ink)' }}>
-                  自动连写
-                </span>
+                <span className="shrink-0 text-xs font-semibold t2">自动连写</span>
                 <input
                   type="number"
                   min={1}
@@ -238,7 +276,7 @@ export default function AIPanel() {
                 />
                 <span className="min-w-0 flex-1 truncate text-xs t3">章 · 只写空白章</span>
                 <button
-                  className="btn-primary ml-auto shrink-0 !px-2.5 !py-1 !text-xs"
+                  className="btn-outline ml-auto shrink-0 !px-2.5 !py-1 !text-xs"
                   disabled={!chapter}
                   onClick={() => void runAutoWrite(autoCount)}
                   title="从当前章往后,按大纲+前情记忆自动逐章生成;「写作意图」会应用于每一章"
@@ -448,11 +486,11 @@ export default function AIPanel() {
           </div>
         </div>
       )}
-      {/* 操作按钮吸底:输出内容再长也始终可见 */}
+      {/* 操作按钮吸底:输出内容再长也始终可见(P2 描边级,不与主按钮抢视觉) */}
       {tab === 'gen' && aiOutput && ACTIONS.length > 0 && !aiRunning && (
         <div className="mt-2 flex flex-wrap gap-2 pt-2.5" style={{ borderTop: '1px solid var(--border)' }}>
           {ACTIONS.map((action) => (
-            <button key={action.label} className="btn-primary !px-2.5 !py-1 !text-xs" onClick={action.run}>
+            <button key={action.label} className="btn-secondary !px-2.5 !py-1 !text-xs" onClick={action.run}>
               {action.label}
             </button>
           ))}

@@ -167,7 +167,7 @@ export default function ItemPanel() {
             {extractBusy ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
             本章提取
           </button>
-          <button className="btn-primary !px-2 !py-1 !text-xs" onClick={() => void addItem()}>
+          <button className="btn-secondary !px-2 !py-1 !text-xs" onClick={() => void addItem()} title="手动新增空白物品卡">
             <Plus size={13} />
           </button>
         </div>
