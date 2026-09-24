@@ -47,16 +47,14 @@ export default function ImportView() {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 gap-3 p-3">
+    <div className="flex min-h-0 flex-1 gap-5 p-4">
       {/* 左:来源与控制(独立白卡) */}
-      <div className="panel flex w-[30rem] shrink-0 flex-col overflow-auto p-4">
+      <div className="panel flex w-[30rem] shrink-0 flex-col overflow-auto p-5">
         <div className="flex items-center gap-2">
           <FileSearch size={16} className="accent" />
-          <h2 className="serif text-sm font-semibold tracking-wider">拆书扫书 · 把任意小说文本拆成设定</h2>
+          <h2 className="text-base font-semibold">拆书扫书</h2>
         </div>
-        <p className="mt-1 text-xs t3">
-          导入你有权使用的文本,AI 分段扫描后自动提取世界观、境界体系、功法、材料与人物,一键写入当前书。
-        </p>
+        <p className="mt-1 text-xs t3">导入文本,AI 分段扫描提取设定,一键写入当前书。</p>
 
         <div className="mt-3 grid grid-cols-2 gap-2">
           <button className="btn-outline" disabled={analyzing} onClick={() => void importTxtFile()}>
@@ -128,15 +126,15 @@ export default function ImportView() {
           </div>
         </div>
 
-        <div className="mt-3 flex items-center gap-2">
+        <div className="mt-3 flex items-center justify-center gap-2">
           {analyzing ? (
-            <button className="btn-outline flex-1" onClick={() => void stopScan()}>
+            <button className="btn-outline" onClick={() => void stopScan()}>
               <Square size={14} />
               停止扫描
             </button>
           ) : (
-            <div className="flex flex-1 gap-2">
-              <button className="btn-primary flex-1" disabled={!importer.text.trim()} onClick={() => confirmStart()}>
+            <>
+              <button className="btn-primary" disabled={!importer.text.trim()} onClick={() => confirmStart()}>
                 <ScanSearch size={14} />
                 {canResume
                   ? `继续扫描(第 ${importer.resumeIndex + 1}/${chunkCount} 段)`
@@ -146,14 +144,14 @@ export default function ImportView() {
               </button>
               {(canResume || hasFailed) && (
                 <button
-                  className="btn-outline shrink-0"
+                  className="btn-outline"
                   title="放弃断点,从第 1 段重新扫描(已有结果会按去重保留)"
                   onClick={() => confirmStart(true)}
                 >
                   重新扫描
                 </button>
               )}
-            </div>
+            </>
           )}
         </div>
 
@@ -173,7 +171,7 @@ export default function ImportView() {
         )}
 
         {importer.log.length > 0 && (
-          <div className="panel inset mt-3 min-h-24 flex-1 overflow-auto p-2 font-mono text-[11px] leading-relaxed t2">
+          <div className="inset mt-3 min-h-24 flex-1 overflow-auto p-2 font-mono text-[11px] leading-relaxed t2">
             {importer.log.map((line, i) => (
               <div key={i}>{line}</div>
             ))}
@@ -182,22 +180,22 @@ export default function ImportView() {
       </div>
 
       {/* 右:扫描结果(独立白卡) */}
-      <div className="flex min-w-0 flex-1 flex-col overflow-auto p-4">
+      <div className="flex min-w-0 flex-1 flex-col overflow-auto p-5">
         <div className="flex items-center justify-between">
-          <h2 className="serif text-sm font-semibold tracking-wider">扫描结果</h2>
+          <h2 className="text-base font-semibold">扫描结果</h2>
           <button
-            className="btn-secondary !px-3 !py-1.5 !text-xs"
+            className="btn-outline !h-8 !px-2.5 !text-xs"
             disabled={analyzing || !hasResults}
             onClick={() => void applyScanToBook()}
-            title="把勾选结果写入当前打开的书(自动去重)"
+            title="把结果写入当前打开的书(自动去重)"
           >
             全部写入当前书
           </button>
         </div>
 
         {!hasResults && !analyzing && (
-          <div className="panel mt-3 p-6 text-center text-sm t3">
-            导入文本并开始扫描后,提取到的设定会出现在这里
+          <div className="mt-3 flex flex-1 items-center justify-center">
+            <p className="text-xs t3">导入文本并开始扫描后,提取到的设定会出现在这里</p>
           </div>
         )}
 

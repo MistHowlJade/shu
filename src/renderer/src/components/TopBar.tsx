@@ -1,4 +1,4 @@
-import { Maximize2, Search } from 'lucide-react'
+import { Maximize2, Search, Settings } from 'lucide-react'
 import { totalWords, useStore } from '../store'
 import type { WorkspaceMode } from '../store'
 
@@ -19,6 +19,7 @@ export default function TopBar() {
   const setWorkspaceMode = useStore((s) => s.setWorkspaceMode)
   const setFocusMode = useStore((s) => s.setFocusMode)
   const setPaletteOpen = useStore((s) => s.setPaletteOpen)
+  const setSettingsOpen = useStore((s) => s.setSettingsOpen)
 
   if (!book) return null
 
@@ -26,7 +27,7 @@ export default function TopBar() {
 
   return (
     <header
-      className="flex h-11 shrink-0 items-center gap-3 px-4"
+      className="flex h-10 shrink-0 items-center gap-3 px-4"
       style={{ background: 'var(--panel)', borderBottom: '1px solid var(--border)' }}
     >
       <h1 className="serif min-w-0 truncate text-[15px] font-semibold" title={book.title}>
@@ -60,7 +61,7 @@ export default function TopBar() {
       </div>
 
       <button
-        className="btn-ghost !px-2 !text-xs"
+        className="btn-ghost !h-8 !px-2 !text-xs"
         title="命令面板 (Ctrl+K)"
         onClick={() => setPaletteOpen(true)}
       >
@@ -70,14 +71,17 @@ export default function TopBar() {
       {/* 沉浸写作只在写作页有意义,其他模式不放死按钮 */}
       {workspaceMode === 'write' && (
         <button
-          className="btn-outline !px-2.5 !py-1 !text-xs"
-          title="隐藏所有面板,只留正文(按 Esc 退出)"
+          className="btn-outline !h-8 !px-2.5 !text-xs"
+          title="隐藏所有面板,只留正文(按 Esc 或 F11 退出)"
           onClick={() => setFocusMode(true)}
         >
           <Maximize2 size={13} />
           沉浸写作
         </button>
       )}
+      <button className="btn-ghost !h-8 !w-8 !px-0" title="设置" onClick={() => setSettingsOpen(true)}>
+        <Settings size={15} />
+      </button>
     </header>
   )
 }

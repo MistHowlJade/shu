@@ -40,21 +40,21 @@ export default function WorldviewPanel() {
   }
 
   return (
-    <div className="space-y-3">
-      <p className="text-xs t3">这些设定会在每次 AI 生成时注入上下文,越具体越不容易崩</p>
+    <div className="space-y-4">
+      <p className="text-xs t3">每次 AI 生成都会注入这些设定</p>
       {(
         [
-          { key: 'setting', label: '世界背景', placeholder: '朝代/大陆格局、社会规则、重要历史事件……' },
-          { key: 'powerSystem', label: '力量 / 等级体系', placeholder: '如:炼气→筑基→金丹→元婴→化神……每一级的能力差异' },
-          { key: 'goldenFinger', label: '金手指(主角外挂)', placeholder: '系统的规则、能力边界、升级条件,越清楚 AI 越不会写崩' },
-          { key: 'factions', label: '势力与阵营', placeholder: '家族、宗门、公司、神秘组织及相互关系' },
-          { key: 'notes', label: '其他设定', placeholder: '世界观补充……' }
+          { key: 'setting', label: '世界背景', placeholder: '朝代格局、社会规则、关键历史' },
+          { key: 'powerSystem', label: '力量 / 等级体系', placeholder: '如:炼气→筑基→金丹→元婴' },
+          { key: 'goldenFinger', label: '金手指(主角外挂)', placeholder: '规则、能力边界、升级条件' },
+          { key: 'factions', label: '势力与阵营', placeholder: '宗门、家族及相互关系' },
+          { key: 'notes', label: '其他设定', placeholder: '世界观补充' }
         ] as const
       ).map(({ key, label, placeholder }) => (
         <div key={key}>
           <label className="field-label">{label}</label>
           <textarea
-            className="field-input min-h-20 resize-y"
+            className="field-input min-h-20 resize-y !py-2.5"
             value={w[key]}
             placeholder={placeholder}
             onChange={(e) => updateWorldview({ [key]: e.target.value })}
@@ -99,14 +99,14 @@ export default function WorldviewPanel() {
         <div className="mt-1.5 flex gap-1.5">
           <input
             className="field-input !py-1.5 !text-xs"
-            placeholder="新增伏笔,如:第三章出现的断剑来历未明"
+            placeholder="新增伏笔,如:断剑的来历"
             value={newForeshadow}
             onChange={(e) => setNewForeshadow(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') addForeshadow()
             }}
           />
-          <button className="btn-outline shrink-0 !px-2.5" title="添加伏笔(Enter)" onClick={addForeshadow}>
+          <button className="btn-outline !h-8 !w-8 shrink-0 !px-0" title="添加伏笔(Enter)" onClick={addForeshadow}>
             <Plus size={13} />
           </button>
         </div>

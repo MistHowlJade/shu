@@ -42,8 +42,8 @@ export default function Sidebar({ onCollapse }: { onCollapse?: () => void }) {
   return (
     <>
       <aside
-        className="flex w-64 shrink-0 flex-col"
-        style={{ background: 'var(--panel)', borderRight: '1px solid var(--border)' }}
+        className="panel flex w-60 shrink-0 flex-col overflow-hidden"
+        style={{ background: 'var(--panel)' }}
       >
       <div className="flex shrink-0 items-center gap-1.5 px-3 pb-1 pt-3">
         <span className="serif text-[11px] font-semibold tracking-[0.25em] t3">目 录</span>
@@ -199,9 +199,10 @@ export default function Sidebar({ onCollapse }: { onCollapse?: () => void }) {
           )
         })}
       </div>
-      <div className="p-3" style={{ borderTop: '1px solid var(--border)' }}>
-        <button className="btn-outline w-full" onClick={() => void addVolume()}>
-          <Plus size={14} />
+      {/* 底部:小幽灵按钮靠右,不占满整行 */}
+      <div className="flex justify-end p-3 pt-2">
+        <button className="btn-outline !h-8 !px-2.5 !text-xs" onClick={() => void addVolume()}>
+          <Plus size={13} />
           新增一卷
         </button>
       </div>

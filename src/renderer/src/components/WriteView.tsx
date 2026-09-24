@@ -22,10 +22,11 @@ export default function WriteView() {
   if (focusMode) return <Editor />
 
   return (
-    <div className="flex min-h-0 flex-1">
+    <div className="flex min-h-0 flex-1 gap-3 p-3">
       {sideOpen && <Sidebar onCollapse={toggleSide} />}
 
-      <div className="relative flex min-w-0 flex-1 flex-col">
+      {/* 编辑器卡片:页面最大容器,视觉核心 */}
+      <div className="panel relative flex min-w-0 flex-1 flex-col overflow-hidden">
         {!sideOpen && (
           <button
             className="btn-ghost absolute left-2 top-2 z-10 !px-2"

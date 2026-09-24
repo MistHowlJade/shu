@@ -65,7 +65,7 @@ function ItemCard({ item }: { item: ItemEntry }) {
               value={item.grade}
               onChange={(e) => updateItem(item.id, { grade: e.target.value })}
               onBlur={persist}
-              placeholder="品级(如:三阶 / 圣器)"
+              placeholder="品级"
             />
           </div>
           <input
@@ -73,7 +73,7 @@ function ItemCard({ item }: { item: ItemEntry }) {
             value={item.owner}
             onChange={(e) => updateItem(item.id, { owner: e.target.value })}
             onBlur={persist}
-            placeholder="当前持有者(角色名)"
+            placeholder="当前持有者"
           />
           <textarea
             className="field-input min-h-12 resize-y !py-1.5 !text-xs"
@@ -95,7 +95,7 @@ function ItemCard({ item }: { item: ItemEntry }) {
               value={item.origin}
               onChange={(e) => updateItem(item.id, { origin: e.target.value })}
               onBlur={persist}
-              placeholder="获取方式(炼制/掉落/传承…)"
+              placeholder="获取方式"
             />
             <input
               className="field-input !py-1.5 !text-xs"
@@ -110,14 +110,14 @@ function ItemCard({ item }: { item: ItemEntry }) {
             value={item.stage}
             onChange={(e) => updateItem(item.id, { stage: e.target.value })}
             onBlur={persist}
-            placeholder="阶段记录(哪一卷/哪一章获得或消耗)"
+            placeholder="阶段记录(哪一章获得/消耗)"
           />
           <textarea
             className="field-input min-h-10 resize-y !py-1.5 !text-xs"
             value={item.notes}
             onChange={(e) => updateItem(item.id, { notes: e.target.value })}
             onBlur={persist}
-            placeholder="备注(升级路线、伏笔等)"
+            placeholder="备注(升级路线、伏笔)"
           />
         </div>
       )}
@@ -125,17 +125,83 @@ function ItemCard({ item }: { item: ItemEntry }) {
   )
 }
 
-export default function ItemPanel() {
-  const book = useStore((s) => s.book)
-  const chapter = useStore((s) => s.chapter)
+/** 卡片头部动作区:AI 生成(下拉面板)+ 本章提取 + 新增,由 CodexView 放进卡片标题行 */
+export function ItemActions() {
   const addItem = useStore((s) => s.addItem)
   const generateItem = useStore((s) => s.generateItem)
   const extractItemsFromChapter = useStore((s) => s.extractItemsFromChapter)
   const itemBusy = useStore((s) => s.itemBusy)
   const extractBusy = useStore((s) => s.extractBusy)
+  const chapter = useStore((s) => s.chapter)
   const [genOpen, setGenOpen] = useState(false)
   const [category, setCategory] = useState('')
   const [hint, setHint] = useState('')
+
+  return (
+    <div className="relative flex items-center gap-1.5">
+      <button
+        className={`btn-outline !h-8 !px-2.5 !text-xs ${genOpen ? 'active' : ''}`}
+        title="用 AI 生成一张物品卡"
+        onClick={() => setGenOpen(!genOpen)}
+      >
+        <Sparkles size={13} />
+        AI生成
+      </button>
+      <button
+        className="btn-outline !h-8 !px-2.5 !text-xs"
+        disabled={extractBusy || !chapter?.content.trim()}
+        title={chapter?.content.trim() ? '从本章正文提取新物品并建卡' : '先写点本章内容'}
+        onClick={() => void extractItemsFromChapter()}
+      >
+        {extractBusy ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
+        本章提取
+      </button>
+      <button className="btn-outline !h-8 !w-8 !px-0" title="手动新增空白物品卡" onClick={() => void addItem()}>
+        <Plus size={13} />
+      </button>
+      {genOpen && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setGenOpen(false)} />
+          <div className="panel absolute right-0 top-9 z-20 w-64 space-y-2 p-2.5" style={{ boxShadow: 'var(--shadow)' }}>
+            <datalist id="item-category-options">
+              {ITEM_CATEGORIES.map((c) => (
+                <option key={c} value={c} />
+              ))}
+            </datalist>
+            <CategoryInput value={category} onChange={setCategory} />
+            <input
+              className="field-input !py-1.5 !text-xs"
+              value={hint}
+              onChange={(e) => setHint(e.target.value)}
+              placeholder="一句话想法,如:可升级的佩剑"
+            />
+            <button
+              className="btn-primary !h-8 w-full !text-xs"
+              disabled={itemBusy}
+              onClick={() => void generateItem(category, hint)}
+            >
+              {itemBusy ? (
+                <>
+                  <Loader2 size={13} className="animate-spin" />
+                  生成中…
+                </>
+              ) : (
+                <>
+                  <Sparkles size={13} />
+                  生成物品卡
+                </>
+              )}
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+/** 物品卡片列表主体:统计 + 搜索 + 列表(头部动作区见 ItemActions) */
+export default function ItemPanel() {
+  const book = useStore((s) => s.book)
   const [query, setQuery] = useState('')
 
   if (!book) return null
@@ -148,80 +214,17 @@ export default function ItemPanel() {
 
   return (
     <div>
-      <datalist id="item-category-options">
-        {ITEM_CATEGORIES.map((c) => (
-          <option key={c} value={c} />
-        ))}
-      </datalist>
-
-      <div className="mb-2 flex items-center justify-between gap-1">
-        <p className="text-xs t3">物品图鉴 · {book.items.length} 件,生成时自动注入</p>
-        <div className="flex shrink-0 items-center gap-1">
-          <button
-            className={`btn-outline !px-2 !py-1 !text-xs ${genOpen ? 'active' : ''}`}
-            onClick={() => setGenOpen(!genOpen)}
-            title="用 AI 生成一张物品卡"
-          >
-            <Sparkles size={13} />
-            AI生成
-          </button>
-          <button
-            className="btn-outline !px-2 !py-1 !text-xs"
-            disabled={extractBusy || !chapter?.content.trim()}
-            title={chapter?.content.trim() ? '从本章正文提取新物品并建卡' : '先写点本章内容'}
-            onClick={() => void extractItemsFromChapter()}
-          >
-            {extractBusy ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
-            本章提取
-          </button>
-          <button className="btn-secondary !px-2 !py-1 !text-xs" onClick={() => void addItem()} title="手动新增空白物品卡">
-            <Plus size={13} />
-          </button>
-        </div>
-      </div>
-
+      <p className="mb-2 text-xs t3">共 {book.items.length} 件,生成时自动注入</p>
       <input
-        className="field-input mb-2 !py-1.5 !text-xs"
+        className="field-input mb-3 !py-1.5 !text-xs"
         placeholder="搜索物品:名称 / 类别 / 品级 / 持有者"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
-
-      {genOpen && (
-        <div className="panel mb-2 space-y-2 p-2.5">
-          <CategoryInput value={category} onChange={setCategory} />
-          <input
-            className="field-input !py-1.5 !text-xs"
-            value={hint}
-            onChange={(e) => setHint(e.target.value)}
-            placeholder="一句话想法,如:主角前期佩剑,后期可升级"
-          />
-          <button
-            className="btn-primary w-full !py-1.5 !text-xs"
-            disabled={itemBusy}
-            onClick={() => void generateItem(category, hint)}
-          >
-            {itemBusy ? (
-              <>
-                <Loader2 size={13} className="animate-spin" />
-                生成中…
-              </>
-            ) : (
-              <>
-                <Sparkles size={13} />
-                生成物品卡
-              </>
-            )}
-          </button>
-        </div>
-      )}
-
       {book.items.length === 0 && (
-        <div className="panel p-4 text-center text-xs t3">
-          把武器、丹药、阵法等重要物品记成卡片,生成正文时名称、品级不会写崩;写完一章点「本章提取」自动归档
-        </div>
+        <div className="py-10 text-center text-xs t3">把重要物品记成卡片,名称品级不会写崩</div>
       )}
-      {q && list.length === 0 && <div className="panel p-4 text-center text-xs t3">没有匹配「{q}」的物品</div>}
+      {q && list.length === 0 && <div className="py-10 text-center text-xs t3">没有匹配「{q}」的物品</div>}
       {list.map((it) => (
         <ItemCard key={it.id} item={it} />
       ))}

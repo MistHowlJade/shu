@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ChevronDown, ChevronRight, FileText, PenLine, Plus } from 'lucide-react'
+import { ChevronDown, ChevronRight, PenLine, Plus } from 'lucide-react'
 import { useStore } from '../store'
 
 const STATUS_LABEL: Record<string, string> = { todo: '待写', draft: '草稿', done: '完成' }
@@ -9,7 +9,7 @@ function ProgressBar({ done, total }: { done: number; total: number }) {
   const pct = total > 0 ? Math.round((done / total) * 100) : 0
   return (
     <div className="flex min-w-0 flex-1 items-center gap-2">
-      <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full" style={{ background: 'var(--panel-2)' }}>
+      <div className="h-1 min-w-0 flex-1 overflow-hidden rounded-full" style={{ background: 'var(--panel-2)' }}>
         <div
           className="h-full rounded-full"
           style={{ width: `${pct}%`, background: 'var(--accent)', transition: 'width 0.3s ease' }}
@@ -34,8 +34,8 @@ function DetailPane() {
   if (!chapter) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-2 t3">
-        <FileText size={32} strokeWidth={1.2} />
-        <p className="serif text-sm">从左侧选择一章,编写它的情节细纲</p>
+        <p className="text-sm font-medium t2">从左侧选择一章,编写它的情节细纲</p>
+        <p className="text-xs t3">细纲是「生成整章」与自动连写的依据</p>
       </div>
     )
   }
@@ -115,20 +115,20 @@ export default function OutlineView() {
   return (
     <div className="min-h-0 flex-1 overflow-auto p-4">
       {/* 简介 + 风格:各自独立白卡 */}
-      <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
-        <div className="panel p-3">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+        <div className="panel p-5">
           <label className="field-label">全书简介(AI 了解主线的第一入口)</label>
           <textarea
-            className="field-input min-h-28 resize-y"
+            className="field-input min-h-28 resize-y !py-2.5"
             value={book.description}
             onChange={(e) => editBookField({ description: e.target.value })}
             onBlur={() => void updateBook(() => undefined)}
           />
         </div>
-        <div className="panel p-3">
+        <div className="panel p-5">
           <label className="field-label">写作风格指令(发给 AI 的 system prompt)</label>
           <textarea
-            className="field-input min-h-28 resize-y font-mono !text-xs"
+            className="field-input min-h-28 resize-y font-mono !py-2.5 !text-xs"
             value={book.style}
             onChange={(e) => editBookField({ style: e.target.value })}
             onBlur={() => void updateBook(() => undefined)}
@@ -137,26 +137,26 @@ export default function OutlineView() {
       </div>
 
       {/* 全书完成率 */}
-      <div className="panel mt-5 flex items-center gap-3 px-3 py-2.5">
-        <span className="serif shrink-0 text-sm font-semibold tracking-wider">全书进度</span>
+      <div className="panel mt-5 flex items-center gap-3 px-5 py-3">
+        <span className="shrink-0 text-base font-semibold">全书进度</span>
         <ProgressBar done={doneChapters} total={book.chapters.length} />
       </div>
 
       {/* 各卷规划(带分卷完成率) */}
       <div className="mt-5">
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="serif text-sm font-semibold tracking-wider">各卷剧情规划</h3>
-          <button className="btn-outline !px-2.5 !py-1 !text-xs" onClick={() => void addVolume()}>
+          <h3 className="text-base font-semibold">各卷剧情规划</h3>
+          <button className="btn-outline !h-8 !px-2.5 !text-xs" onClick={() => void addVolume()}>
             <Plus size={13} />
             新增一卷
           </button>
         </div>
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 2xl:grid-cols-3">
           {book.volumes.map((volume) => {
             const volChapters = book.chapters.filter((c) => c.volumeId === volume.id)
             const volDone = volChapters.filter((c) => c.status === 'done').length
             return (
-              <div key={volume.id} className="panel p-3">
+              <div key={volume.id} className="panel p-5">
                 <input
                   className="w-full bg-transparent text-sm font-semibold outline-none"
                   value={volume.title}
@@ -180,8 +180,8 @@ export default function OutlineView() {
                   </div>
                 )}
                 <textarea
-                  className="field-input mt-2 min-h-20 resize-y !text-xs"
-                  placeholder="这一卷的主线剧情、关键冲突、结尾大战……"
+                  className="field-input mt-2 min-h-20 resize-y !py-2.5 !text-xs"
+                  placeholder="本卷主线、关键冲突、结尾高潮"
                   value={volume.summary}
                   onChange={(e) => {
                     const value = e.target.value
