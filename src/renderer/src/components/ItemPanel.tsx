@@ -136,8 +136,15 @@ export default function ItemPanel() {
   const [genOpen, setGenOpen] = useState(false)
   const [category, setCategory] = useState('')
   const [hint, setHint] = useState('')
+  const [query, setQuery] = useState('')
 
   if (!book) return null
+
+  /* 快速搜索:名称/类别/品级/持有者/效果任一命中 */
+  const q = query.trim()
+  const list = q
+    ? book.items.filter((it) => [it.name, it.category, it.grade, it.owner, it.effect].some((v) => v.includes(q)))
+    : book.items
 
   return (
     <div>
@@ -173,6 +180,13 @@ export default function ItemPanel() {
         </div>
       </div>
 
+      <input
+        className="field-input mb-2 !py-1.5 !text-xs"
+        placeholder="搜索物品:名称 / 类别 / 品级 / 持有者"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
+
       {genOpen && (
         <div className="panel mb-2 space-y-2 p-2.5">
           <CategoryInput value={category} onChange={setCategory} />
@@ -207,7 +221,8 @@ export default function ItemPanel() {
           把武器、丹药、阵法等重要物品记成卡片,生成正文时名称、品级不会写崩;写完一章点「本章提取」自动归档
         </div>
       )}
-      {book.items.map((it) => (
+      {q && list.length === 0 && <div className="panel p-4 text-center text-xs t3">没有匹配「{q}」的物品</div>}
+      {list.map((it) => (
         <ItemCard key={it.id} item={it} />
       ))}
     </div>

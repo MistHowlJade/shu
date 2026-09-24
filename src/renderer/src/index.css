@@ -30,8 +30,13 @@
   --ok: #3d7a4e;
   --warn: #9a6a15;
   --shadow: 0 10px 30px -12px rgba(80, 60, 30, 0.25);
+  --shadow-card: 0 1px 3px rgba(80, 60, 30, 0.07);
   --ring: rgba(178, 58, 42, 0.25);
   --backdrop: rgba(45, 36, 22, 0.42);
+  /* 分页面底色:设定=浅青灰(资料库)/ 大纲=浅蓝灰(规划)/ 拆书=浅棕灰(对标);写作页用暖米白基底不另调 */
+  --tint-codex: #ebf2ef;
+  --tint-outline: #ebf0f6;
+  --tint-import: #f0ebdf;
   --font-serif: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong", "SimSun", Georgia, serif;
   --font-ui: system-ui, "Microsoft YaHei", "PingFang SC", sans-serif;
 }
@@ -55,8 +60,12 @@
   --ok: #74b083;
   --warn: #c69a45;
   --shadow: 0 12px 34px -14px rgba(0, 0, 0, 0.6);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.35);
   --ring: rgba(212, 103, 77, 0.3);
   --backdrop: rgba(8, 6, 3, 0.55);
+  --tint-codex: #18211d;
+  --tint-outline: #171d27;
+  --tint-import: #201c13;
 }
 
 html,
@@ -110,11 +119,13 @@ body {
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 12px;
+  box-shadow: var(--shadow-card);
 }
 .inset {
   background: var(--panel-2);
   border: 1px solid var(--border);
   border-radius: 10px;
+  box-shadow: var(--shadow-card);
 }
 
 /* ---------------- 输入控件 ---------------- */
@@ -286,6 +297,25 @@ body {
   width: 3px;
   border-radius: 2px;
   background: var(--accent);
+}
+
+/* 图标+文字组合的导航按钮(四大工作区):提高页面辨识度 */
+.rail-btn.labeled {
+  width: 50px;
+  height: auto;
+  flex-direction: column;
+  gap: 3px;
+  padding: 7px 0 6px;
+}
+.rail-btn.labeled .rail-label {
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.04em;
+}
+.rail-btn.labeled.active::before {
+  left: -3px;
+  top: 8px;
+  bottom: 8px;
 }
 
 /* 未开书时置灰:禁用态连 hover 底色都不该亮,避免看起来像能点 */

@@ -20,6 +20,8 @@ export default function TopBar() {
 
   if (!book) return null
 
+  const doneCount = book.chapters.filter((c) => c.status === 'done').length
+
   return (
     <header
       className="flex h-11 shrink-0 items-center gap-3 px-4"
@@ -29,7 +31,7 @@ export default function TopBar() {
         《{book.title}》
       </h1>
       <span className="hidden shrink-0 text-xs t3 md:inline">
-        {book.genre} · {totalWords(book).toLocaleString('zh-CN')} 字
+        {book.genre} · 已完成 {doneCount}/{book.chapters.length} 章 · {totalWords(book).toLocaleString('zh-CN')} 字
       </span>
 
       <span className="mx-auto flex items-center gap-1.5 rounded-full px-3 py-1 text-xs t3" style={{ background: 'var(--panel-2)' }}>

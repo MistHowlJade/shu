@@ -60,14 +60,15 @@ export default function Rail() {
       {MODES.map(({ id, label, icon: Icon, kbd }) => (
         <button
           key={id}
-          className={`rail-btn ${!inLibrary && workspaceMode === id ? 'active' : ''}`}
+          className={`rail-btn labeled ${!inLibrary && workspaceMode === id ? 'active' : ''}`}
           title={book ? `${label} (${kbd})` : `${label} · 先打开一本书`}
           disabled={!book}
           onClick={() => {
             if (book) setWorkspaceMode(id)
           }}
         >
-          <Icon size={18} />
+          <Icon size={17} />
+          <span className="rail-label">{label}</span>
         </button>
       ))}
 

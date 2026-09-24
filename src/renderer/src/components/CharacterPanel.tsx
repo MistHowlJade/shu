@@ -94,8 +94,13 @@ export default function CharacterPanel() {
   const nameCandidates = useStore((s) => s.nameCandidates)
   const [namingOpen, setNamingOpen] = useState(false)
   const [nameHint, setNameHint] = useState('')
+  const [query, setQuery] = useState('')
 
   if (!book) return null
+
+  /* 快速搜索:写文时按名字/定位查设定,不用翻页 */
+  const q = query.trim()
+  const list = q ? book.characters.filter((c) => c.name.includes(q) || c.role.includes(q)) : book.characters
   return (
     <div>
       <div className="mb-2 flex items-center justify-between gap-1">
@@ -115,6 +120,13 @@ export default function CharacterPanel() {
           </button>
         </div>
       </div>
+
+      <input
+        className="field-input mb-2 !py-1.5 !text-xs"
+        placeholder="搜索人物名 / 定位,快速查设定"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
 
       {namingOpen && (
         <div className="panel mb-2 space-y-2 p-2.5">
@@ -164,7 +176,10 @@ export default function CharacterPanel() {
           先把主角、女主、反派等核心人物建好卡,AI 写作时人设不会崩
         </div>
       )}
-      {book.characters.map((c) => (
+      {q && list.length === 0 && (
+        <div className="panel p-4 text-center text-xs t3">没有匹配「{q}」的人物</div>
+      )}
+      {list.map((c) => (
         <CharacterCard key={c.id} character={c} />
       ))}
     </div>

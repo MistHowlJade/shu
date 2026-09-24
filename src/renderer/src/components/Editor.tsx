@@ -99,7 +99,7 @@ export default function Editor() {
         className="serif measure min-h-0 w-full flex-1 resize-none bg-transparent px-1 py-6 text-[17px] leading-[1.95] outline-none"
         style={{ color: 'var(--text)', caretColor: 'var(--accent)' }}
         value={content}
-        placeholder={'在这里写作,或用右侧「AI 助手」生成初稿。\n\n小技巧:\n· 光标停在任意位置,点「从光标续写」让 AI 接着写\n· 写完一章点「前情摘要」,长篇不崩设定\n· Ctrl+Enter 一键生成整章 · Ctrl+S 随时保存 · Ctrl+K 命令面板'}
+        placeholder={'在这里写作,或用右侧「AI 助手」生成初稿。\n\n· 光标停在任意位置,点「从光标续写」接着写\n· 写完一章点「前情摘要」,长篇不断片'}
         onChange={(e) => setContent(e.target.value)}
         onSelect={(e) => {
           const el = e.currentTarget

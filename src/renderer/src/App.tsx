@@ -138,10 +138,19 @@ export default function App() {
         ) : (
           <>
             {!focus && <TopBar />}
-            {workspaceMode === 'write' && <WriteView />}
-            {workspaceMode === 'codex' && <CodexView />}
-            {workspaceMode === 'outline' && <OutlineView />}
-            {workspaceMode === 'import' && <ImportView />}
+            {/* 分页面配色:设定=青灰 / 大纲=蓝灰 / 拆书=棕灰,一眼识别当前功能区;写作页保持暖米白基底 */}
+            <div
+              className="flex min-h-0 flex-1 flex-col overflow-hidden"
+              style={{
+                background: workspaceMode !== 'write' ? `var(--tint-${workspaceMode})` : undefined,
+                transition: 'background-color 0.25s ease'
+              }}
+            >
+              {workspaceMode === 'write' && <WriteView />}
+              {workspaceMode === 'codex' && <CodexView />}
+              {workspaceMode === 'outline' && <OutlineView />}
+              {workspaceMode === 'import' && <ImportView />}
+            </div>
             {!focus && <StatusBar />}
           </>
         )}
