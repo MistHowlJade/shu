@@ -34,6 +34,8 @@ npm run dist       # 打包 Windows 安装包(release/ 目录)
 ```
 
 > 本项目开发时使用的是绿色版 Node.js(仓库内 `tools/nodejs`,版本 v22),系统 PATH 中若无 node,请先 `set "PATH=D:\项目\shu\tools\nodejs;%PATH%"`。
+> 打包时 electron-builder 需要从 GitHub 下载二进制工具链,国内网络建议先设置镜像:
+> `set ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/`
 
 ### 开发与测试
 
@@ -105,6 +107,16 @@ src/
 tests/                  # vitest 单元测试
 tools/nodejs/           # 绿色版 Node(v22),仅供本仓库开发使用
 ```
+
+## 界面设计规范 V3.1「纸面浮室」
+
+渲染层视觉全部由 `src/renderer/src/index.css` 的 CSS 变量驱动,改观感只需调变量,不必动组件:
+
+- **结构**:单条顶栏 + 内容区;AI 助手为右侧按需滑出的玻璃抽屉(`.drawer`,快捷键 Ctrl+I,生成时自动弹出);底部状态栏已并入正文画布内的静默统计条
+- **表面**:`.editor-sheet` 写作纸面 / `.panel` 浮卡 / `.inset` 内嵌区 / `.soft-row` 列表软行 / `.glass` 玻璃浮层
+- **质感来源**:环境光渐变底(`body::before`)+ 细噪点(`body::after`,2.8%)+ 层叠柔影 + 顶缘 1px 内高光(`--inset-light`)+ 主色渐变按钮(`.btn-primary`)
+- **色彩**:浅色纸灰底、深色墨蓝底;朱砂红 `--accent` 仅用于点睛;深浅主题各一套变量,组件零改动切换
+- **字体**:界面黑体(系统栈),手稿与标题用思源宋体 `Noto Serif SC`(经 `@fontsource/noto-serif-sc` 本地打包,SIL OFL 开源许可,许可文本见 `build/font-OFL.txt`);宋体/黑体的切换只需改 `--font-serif` 一个变量
 
 ## 数据格式
 

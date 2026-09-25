@@ -3,3 +3,9 @@ out/
 release/
 *.tsbuildinfo
 .DS_Store
+
+
+.tools/
+.preview/
+.nv-models.json
+scan-results.json
