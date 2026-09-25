@@ -55,9 +55,15 @@ function readJson<T>(file: string): T | null {
 
 function writeJson(file: string, data: unknown): void {
   fs.mkdirSync(path.dirname(file), { recursive: true })
-  /* 先写临时文件再原子替换,避免写入中断电/崩溃留下半个 JSON 导致书籍"凭空消失" */
+  /* 先写临时文件(fsync 确保落盘)再原子替换:崩溃/断电最坏留下旧版文件,不会出现半个 JSON */
   const tmp = `${file}.tmp`
-  fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf-8')
+  const fd = fs.openSync(tmp, 'w')
+  try {
+    fs.writeFileSync(fd, JSON.stringify(data, null, 2), 'utf-8')
+    fs.fsyncSync(fd)
+  } finally {
+    fs.closeSync(fd)
+  }
   fs.renameSync(tmp, file)
 }
 
@@ -203,6 +209,32 @@ function normalizeBook(book: Book): Book {
   }
 }
 
+/* ---------------- 数据 schema 版本与迁移 ---------------- */
+
+/** 当前数据 schema 版本:随 saveBook 写入 book.json;升级数据前先拍快照 */
+export const SCHEMA_VERSION = 1
+
+type VersionedBook = Book & { schemaVersion?: number }
+
+/**
+ * 版本迁移表:键为「文件里的版本号」,把数据从该版本推进到下一版。
+ * 每个迁移必须可重入;破坏性迁移上线前,先在 snapshotBook 里给用户留快照。
+ */
+const MIGRATIONS: Record<number, (book: VersionedBook) => void> = {
+  /* 0 → 1:首版即当前结构,仅需补全缺失字段(由 normalizeBook 完成) */
+}
+
+/** 旧文件补全 + 版本推进。migrated=true 表示文件里原本没有版本号(首次标记) */
+function migrateBook(raw: VersionedBook): { book: Book; migrated: boolean } {
+  const from = typeof raw.schemaVersion === 'number' ? raw.schemaVersion : 0
+  const book: VersionedBook = normalizeBook(raw as Book)
+  for (let v = from; v < SCHEMA_VERSION; v++) {
+    MIGRATIONS[v]?.(book)
+  }
+  book.schemaVersion = SCHEMA_VERSION
+  return { book: book as Book, migrated: from < SCHEMA_VERSION }
+}
+
 export function listBooks(root: string): BookSummaryInternal[] {
   if (!fs.existsSync(root)) return []
   const result: BookSummaryInternal[] = []
@@ -221,12 +253,14 @@ export function listBooks(root: string): BookSummaryInternal[] {
 }
 
 export function readBook(dir: string): Book | null {
-  const book = readJson<Book>(path.join(dir, 'book.json'))
-  return book && book.id ? normalizeBook(book) : null
+  const raw = readJson<VersionedBook>(path.join(dir, 'book.json'))
+  if (!raw || !raw.id) return null
+  return migrateBook(raw).book
 }
 
 export function saveBook(dir: string, book: Book): Book {
   book.updatedAt = Date.now()
+  ;(book as VersionedBook).schemaVersion = SCHEMA_VERSION
   writeJson(path.join(dir, 'book.json'), book)
   return book
 }
@@ -257,8 +291,9 @@ export function createBook(root: string, input: CreateBookInput): BookSummaryInt
     worldview: { ...EMPTY_WORLDVIEW },
     items: [],
     createdAt: now,
-    updatedAt: now
-  }
+    updatedAt: now,
+    schemaVersion: SCHEMA_VERSION
+  } as Book
   writeJson(path.join(dir, 'book.json'), book)
   return { dir, book }
 }
@@ -324,7 +359,8 @@ export function listChapterHistory(bookDir: string, chapterId: string): ChapterH
     const m = pattern.exec(name)
     if (!m) continue
     const snap = readJson<Chapter>(path.join(dir, name))
-    if (!snap) continue
+    /* 跳过损坏抢救留下的原始字节文件(它们不是合法章节 JSON) */
+    if (!snap || typeof snap.title !== 'string' || typeof snap.content !== 'string') continue
     entries.push({ file: name, time: Number(m[1]), title: snap.title, wordCount: countWords(snap.content) })
   }
   return entries.sort((a, b) => b.time - a.time)
@@ -362,6 +398,14 @@ export interface SaveChapterResult {
   meta: ChapterMeta
 }
 
+/** 章节文件损坏时的抢救:把原始字节原样复制进历史目录(列表会跳过它,但字节绝不静默丢失) */
+function preserveCorruptChapter(bookDir: string, file: string): void {
+  const dir = historyDir(bookDir)
+  fs.mkdirSync(dir, { recursive: true })
+  const base = file.replace(/\.json$/, '')
+  fs.copyFileSync(path.join(chaptersDir(bookDir), file), path.join(dir, `${base}-${Date.now()}.json`))
+}
+
 /** 保存章节文件,并同步 book.json 中对应章节的元数据;旧正文与新版不同时自动归档一份历史版本 */
 export function saveChapter(bookDir: string, chapter: Chapter): SaveChapterResult {
   const book = readBook(bookDir)
@@ -369,9 +413,13 @@ export function saveChapter(bookDir: string, chapter: Chapter): SaveChapterResul
   const meta = book.chapters.find((c) => c.id === chapter.id)
   if (!meta) throw new Error('章节不存在: ' + chapter.id)
 
-  const old = readJson<Chapter>(path.join(chaptersDir(bookDir), meta.file))
+  const chapterPath = path.join(chaptersDir(bookDir), meta.file)
+  const old = readJson<Chapter>(chapterPath)
   if (old && old.content.trim() && old.content !== chapter.content) {
     archiveChapter(bookDir, meta.file, old)
+  } else if (!old && fs.existsSync(chapterPath)) {
+    /* 文件存在但解析失败(上次写坏):先把原始字节抢救进历史目录,再覆盖 */
+    preserveCorruptChapter(bookDir, meta.file)
   }
 
   chapter.updatedAt = Date.now()
@@ -381,7 +429,7 @@ export function saveChapter(bookDir: string, chapter: Chapter): SaveChapterResul
   meta.status = meta.status === 'todo' && meta.wordCount > 0 ? 'draft' : meta.status
   meta.updatedAt = chapter.updatedAt
 
-  writeJson(path.join(chaptersDir(bookDir), meta.file), chapter)
+  writeJson(chapterPath, chapter)
   saveBook(bookDir, book)
   return { chapter, meta }
 }
@@ -464,6 +512,21 @@ function backupsRoot(libraryRoot: string): string {
   return path.join(libraryRoot, BACKUPS_DIR_NAME)
 }
 
+/**
+ * 递归复制目录。不用 fs.cpSync:Node 22.23 在 Windows 上复制含中文路径的目录会
+ * 段错误(本机实测 ASCII 正常、中文 SIGSEGV),而书名目录几乎都是中文,一旦触发
+ * 会把整个进程硬崩掉,连 try/catch 都拦不住。
+ */
+function copyDir(src: string, dest: string): void {
+  fs.mkdirSync(dest, { recursive: true })
+  for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+    const s = path.join(src, entry.name)
+    const d = path.join(dest, entry.name)
+    if (entry.isDirectory()) copyDir(s, d)
+    else if (entry.isFile()) fs.copyFileSync(s, d)
+  }
+}
+
 function listSnapshots(bookBackups: string): string[] {
   if (!fs.existsSync(bookBackups)) return []
   return fs
@@ -507,7 +570,7 @@ export function snapshotBook(bookDir: string, libraryRoot: string, opts?: { forc
   const p = (n: number, w = 2): string => String(n).padStart(w, '0')
   const name = `snap-${p(d.getFullYear(), 4)}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`
   const target = path.join(bookBackups, name)
-  fs.cpSync(bookDir, target, { recursive: true })
+  copyDir(bookDir, target)
 
   const all = listSnapshots(bookBackups)
   for (const old of all.slice(0, Math.max(0, all.length - KEEP_SNAPSHOTS))) {
