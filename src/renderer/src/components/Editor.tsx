@@ -47,8 +47,10 @@ export default function Editor() {
   const saveNow = useStore((s) => s.saveNow)
   const renameChapter = useStore((s) => s.renameChapter)
   const cycleChapterStatus = useStore((s) => s.cycleChapterStatus)
+  const updateBook = useStore((s) => s.updateBook)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [today, setToday] = useState(0)
+  const [targetEditing, setTargetEditing] = useState(false)
   const profileName = useStore((s) => activeProfile(s.settings.ai).name)
 
   /* 自动保存:停止输入 900ms 后写盘 */
@@ -92,6 +94,17 @@ export default function Editor() {
   }
 
   const meta = book.chapters.find((c) => c.id === chapter.id)
+  const reached = !!meta?.targetWords && content.replace(/\s/g, '').length >= meta.targetWords
+  const chapterId = chapter.id
+
+  function commitTarget(words: number): void {
+    void updateBook((draft) => {
+      const m = draft.chapters.find((c) => c.id === chapterId)
+      if (!m) return
+      if (words > 0) m.targetWords = words
+      else delete m.targetWords
+    })
+  }
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
@@ -145,7 +158,7 @@ export default function Editor() {
         spellCheck={false}
       />
 
-      {/* 纸面内静默统计条(取代原状态栏):生成/保存/字数,沉浸模式下也保留 */}
+      {/* 纸面内静默统计条(取代原状态栏):生成/保存/字数/目标,沉浸模式下也保留 */}
       <div
         className="flex h-9 shrink-0 items-center justify-center gap-4 px-4 text-[11.5px] t3"
         style={{ borderTop: '1px solid color-mix(in srgb, var(--border) 60%, transparent)' }}
@@ -161,7 +174,39 @@ export default function Editor() {
         ) : savedAt ? (
           <span className="ok">已保存 {new Date(savedAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</span>
         ) : null}
-        <span>本章 {content.replace(/\s/g, '').length.toLocaleString('zh-CN')} 字</span>
+        {/* 本章字数 / 目标字数:点数字可编辑目标,达成点亮 */}
+        {targetEditing ? (
+          <input
+            autoFocus
+            type="number"
+            min={0}
+            defaultValue={meta?.targetWords ?? ''}
+            placeholder="目标字数"
+            className="w-20 rounded-md px-1.5 py-0.5 text-center text-[11.5px] outline-none"
+            style={{ background: 'var(--panel-2)', color: 'var(--text)' }}
+            onBlur={(e) => {
+              const v = parseInt(e.target.value, 10)
+              commitTarget(Number.isFinite(v) && v > 0 ? v : 0)
+              setTargetEditing(false)
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') (e.target as HTMLInputElement).blur()
+              if (e.key === 'Escape') setTargetEditing(false)
+            }}
+          />
+        ) : (
+          <button
+            className="t3 transition hover:text-[var(--text)]"
+            title="点击设置本章目标字数"
+            onClick={() => setTargetEditing(true)}
+          >
+            <span style={reached ? { color: 'var(--ok)' } : undefined}>
+              本章 {content.replace(/\s/g, '').length.toLocaleString('zh-CN')}
+              {meta?.targetWords ? ` / ${meta.targetWords.toLocaleString()}` : ''} 字
+              {reached ? ' ✦' : ''}
+            </span>
+          </button>
+        )}
         <span>
           全书 {totalWords(book).toLocaleString('zh-CN')} 字 · {book.chapters.length} 章
         </span>

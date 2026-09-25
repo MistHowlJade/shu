@@ -17,6 +17,7 @@ import type {
 import { abortGeneration, chatOnce, streamChat, type ChatEndpoint } from './ai-client'
 import {
   buildChapterMessages,
+  buildConsistencyMessages,
   buildContinueMessages,
   buildItemExtractMessages,
   buildItemMessages,
@@ -30,6 +31,7 @@ import { fetchWebpageText, readTxtFile } from './importer'
 import { activeProfile } from '../shared/types'
 import { chunkText, parseJsonLoose } from '../shared/text'
 import {
+  autoSnapshot,
   buildExportText,
   createBook,
   createChapter,
@@ -223,6 +225,12 @@ export function registerIpcHandlers(): void {
   )
   ipcMain.handle('chapters:save', (_e, dir: string, chapter: Chapter) => {
     const { chapter: saved, meta } = saveChapter(assertBookDir(dir), chapter)
+    /* 会话滚动备份:写作期间每 30 分钟留一份、保留 7 天;失败不阻塞保存 */
+    try {
+      autoSnapshot(assertBookDir(dir), ensureLibraryRoot(loadSettings()))
+    } catch {
+      /* 备份失败不阻塞保存 */
+    }
     return { chapter: saved, meta }
   })
   ipcMain.handle('chapters:create', (_e, dir: string, volumeId: string, title: string) =>
@@ -287,6 +295,20 @@ export function registerIpcHandlers(): void {
       const prev = readPrecedingChapters(input.dir, book, input.chapterId, 10)
       const settings = loadSettings()
       const messages = buildChapterMessages(book, chapter, prev, input.intent, settings.ai)
+      return await runGeneration({ requestId: input.requestId ?? randomUUID(), messages }, _e.sender)
+    } catch (err) {
+      return { ok: false, error: err instanceof Error ? err.message : String(err) }
+    }
+  })
+
+  /** 一致性检查:对照人物卡/世界观/伏笔清单审本章正文 */
+  ipcMain.handle('ai:generateConsistency', async (_e, input: { requestId?: string; dir: string; chapterId: string }): Promise<AiResult> => {
+    try {
+      const book = requireBook(input.dir)
+      const chapter = readChapter(input.dir, input.chapterId)
+      if (!chapter) throw new Error('章节不存在')
+      const settings = loadSettings()
+      const messages = buildConsistencyMessages(book, chapter, settings.ai)
       return await runGeneration({ requestId: input.requestId ?? randomUUID(), messages }, _e.sender)
     } catch (err) {
       return { ok: false, error: err instanceof Error ? err.message : String(err) }

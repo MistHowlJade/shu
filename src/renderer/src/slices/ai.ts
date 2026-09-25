@@ -72,6 +72,7 @@ export function aiSlice({ set, get }: SliceCtx): AISlice {
           result = await window.api.ai.generateContinue({ requestId, dir: bookDir, chapterId: chapter.id, textBefore })
         }
         else if (kind === 'outline') result = await window.api.ai.generateOutline(input)
+        else if (kind === 'consistency') result = await window.api.ai.generateConsistency({ requestId, dir: bookDir, chapterId: chapter.id })
         else if (kind === 'summary') result = await window.api.ai.summarize(input)
         else {
           const text = selection ? content.slice(selection.start, selection.end) : ''

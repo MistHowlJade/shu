@@ -18,6 +18,8 @@ export interface ChapterMeta {
   wordCount: number
   hasSummary: boolean
   updatedAt: number
+  /** 本章目标字数(可选):编辑器统计条显示进度,达成时点亮 */
+  targetWords?: number
 }
 
 export interface Character {
@@ -181,7 +183,7 @@ export interface ChatMessage {
   content: string
 }
 
-export type GenerateKind = 'chapter' | 'continue' | 'polish' | 'outline' | 'summary'
+export type GenerateKind = 'chapter' | 'continue' | 'polish' | 'outline' | 'summary' | 'consistency'
 
 export interface AiDelta {
   requestId: string

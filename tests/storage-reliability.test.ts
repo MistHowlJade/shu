@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 /* vitest 5 的 forks 池在 Windows 上对「内含 await import 的异步 mock 工厂」会硬崩,
    因此工厂保持同步:临时目录推迟到 beforeEach 里创建,工厂只读共享状态 */
@@ -15,6 +15,7 @@ vi.mock('electron', () => ({
 
 import {
   SCHEMA_VERSION,
+  autoSnapshot,
   createBook,
   createChapter,
   listBookSnapshots,
@@ -156,5 +157,37 @@ describe('存储可靠层 · 备份时间线与恢复', () => {
     const lib = newLib('guard')
     const { dir } = makeBook(lib, '守卫测试')
     expect(() => restoreSnapshot(lib, dir, '..\\..\\evil')).toThrow(/非法的快照名/)
+  })
+})
+
+describe('存储可靠层 · 会话滚动备份', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    state.root = mkdtempSync(join(tmpdir(), 'nv-storage-'))
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('间隔内跳过;超间隔拍摄并滚动清理 7 天前的旧快照(保留最新一份)', () => {
+    const lib = newLib('rolling')
+    const { dir, volumeId } = makeBook(lib, '滚动备份')
+    const { chapter } = createChapter(dir, { volumeId, title: '第一章' })
+    saveChapter(dir, { ...chapter, content: '内容' })
+
+    /* 首次:无快照 → 立即拍 */
+    expect(autoSnapshot(dir, lib).created).toBe(true)
+    expect(listBookSnapshots(lib, dir).length).toBe(1)
+
+    /* 10 分钟后:仍在 30 分钟间隔内 → 不拍 */
+    vi.setSystemTime(Date.now() + 10 * 60 * 1000)
+    expect(autoSnapshot(dir, lib).created).toBe(false)
+
+    /* 8 天后:超过间隔 → 拍新快照;旧的(7 天前)被滚动清理,只剩最新一份 */
+    vi.setSystemTime(Date.now() + 8 * 24 * 3600 * 1000)
+    expect(autoSnapshot(dir, lib).created).toBe(true)
+    const list = listBookSnapshots(lib, dir)
+    expect(list.length).toBe(1)
+    expect(list[0].chapterCount).toBe(1)
   })
 })

@@ -219,6 +219,53 @@ export function buildSummaryMessages(book: Book, chapter: Chapter, ai: AISetting
   ]
 }
 
+/** 一致性检查:对照人物卡/世界观/伏笔清单审本章正文,输出冲突清单 */
+export function buildConsistencyMessages(book: Book, chapter: Chapter, ai: AISettings): ChatMessage[] {
+  const system =
+    stylePromptOf(book) +
+    '\n\n本次任务为一致性审稿:只找本章正文与设定之间的冲突和前后矛盾,不要改写、不要输出正文。检查维度:人物(性格/外貌/能力/关系/称谓)、世界观(等级体系/规则)、物品(持有与流转)、伏笔(误回收/矛盾)。\n输出格式:每条冲突一行「- 冲突点:简述(依据:对应设定)」;确无冲突时只输出「未发现设定冲突」。'
+
+  const chars = book.characters
+    .map((c) => {
+      const parts = [
+        c.role && '身份:' + c.role,
+        c.personality && '性格:' + c.personality,
+        c.appearance && '外貌:' + c.appearance,
+        c.abilities && '能力:' + c.abilities,
+        c.relations && '关系:' + c.relations,
+        c.background && '背景:' + c.background
+      ].filter(Boolean)
+      return parts.length > 0 ? `${c.name}(${parts.join(';')})` : ''
+    })
+    .filter(Boolean)
+    .join('\n')
+
+  const w = book.worldview
+  const world = [
+    w.setting.trim() && '世界背景:' + w.setting.trim(),
+    w.powerSystem.trim() && '等级体系:' + w.powerSystem.trim(),
+    w.factions.trim() && '势力阵营:' + w.factions.trim()
+  ]
+    .filter(Boolean)
+    .join('\n')
+
+  const foreshadows = (w.foreshadows ?? [])
+    .map((f, i) => `#${i + 1} ${f.text}(${f.resolved ? '已回收' : '待回收'})`)
+    .join('\n')
+
+  const sections: string[] = []
+  if (chars) sections.push(`【人物卡】\n${chars}`)
+  if (world) sections.push(`【世界观】\n${world}`)
+  if (foreshadows) sections.push(`【伏笔清单】\n${foreshadows}`)
+  sections.push(`【本章正文】《${chapter.title}》\n${tail(chapter.content, ai.contextBudgetChars)}`)
+
+  const user = '请对照以下设定,检查本章正文的一致性冲突:\n\n' + sections.join('\n\n')
+  return [
+    { role: 'system', content: system },
+    { role: 'user', content: user }
+  ]
+}
+
 /** 为角色起名:返回候选名列表(每行一个) */
 export function buildNamingMessages(book: Book, hint: string): ChatMessage[] {
   const system = '你是资深中文网络小说起名专家,精通玄幻、仙侠、都市、科幻等各类题材的人物命名,名字兼顾寓意、声调与辨识度。'

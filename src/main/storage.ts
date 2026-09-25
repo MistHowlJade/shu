@@ -652,6 +652,40 @@ export function restoreSnapshot(libraryRoot: string, bookDir: string, name: stri
   return book
 }
 
+/* ---------------- 会话滚动备份 ---------------- */
+
+/** 滚动快照保留天数:更早的在下次自动备份时清理(至少保留最新一份) */
+const ROLLING_KEEP_DAYS = 7
+
+/**
+ * 会话滚动备份:距最新快照超过 minInterval 才拍新快照,并清理超过 keepDays 的旧快照。
+ * 空书/无新变化时静默跳过。由 chapters:save 在每次保存后触发。
+ */
+export function autoSnapshot(
+  bookDir: string,
+  libraryRoot: string,
+  minIntervalMs = 30 * 60 * 1000,
+  keepDays = ROLLING_KEEP_DAYS
+): { created: boolean } {
+  const book = readBook(bookDir)
+  if (!book || !book.chapters.some((c) => c.wordCount > 0)) return { created: false }
+  const bookBackups = snapshotsDirFor(libraryRoot, bookDir)
+  const existing = listSnapshots(bookBackups)
+  if (existing.length > 0 && Date.now() - snapTime(existing[existing.length - 1]).getTime() < minIntervalMs) {
+    return { created: false }
+  }
+  snapshotNow(bookDir, bookBackups)
+  /* 7 天滚动清理:按快照时间删旧(至少保留最新一份) */
+  const cutoff = Date.now() - keepDays * 24 * 3600 * 1000
+  const all = listSnapshots(bookBackups)
+  for (const old of all.slice(0, Math.max(0, all.length - 1))) {
+    if (snapTime(old).getTime() < cutoff) {
+      fs.rmSync(path.join(bookBackups, old), { recursive: true, force: true })
+    }
+  }
+  return { created: true }
+}
+
 /* ---------------- 导出 ---------------- */
 
 export function buildExportText(book: Book, bookDir: string): string {

@@ -74,6 +74,8 @@ const api = {
       ipcRenderer.invoke('ai:polish', input),
     generateOutline: (input: { requestId: string; dir: string; chapterId: string; intent: string }): Promise<AiResult> =>
       ipcRenderer.invoke('ai:generateOutline', input),
+    generateConsistency: (input: { requestId?: string; dir: string; chapterId: string }): Promise<AiResult> =>
+      ipcRenderer.invoke('ai:generateConsistency', input),
     summarize: (input: { requestId: string; dir: string; chapterId: string; intent: string }): Promise<AiResult> =>
       ipcRenderer.invoke('ai:summarize', input),
     generateNames: (input: { requestId: string; dir: string; hint: string }): Promise<AiResult> =>

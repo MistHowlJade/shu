@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ChevronDown, ChevronRight, Clipboard, Copy, CornerDownLeft, Eraser, Highlighter, Loader2, MessageCircle, RefreshCw, Send, Settings, Square, Users, Wand2, X } from 'lucide-react'
+import { ChevronDown, ChevronRight, Clipboard, SearchCheck, Copy, CornerDownLeft, Eraser, Highlighter, Loader2, MessageCircle, RefreshCw, Send, Settings, Square, Users, Wand2, X } from 'lucide-react'
 import { totalWords, useStore } from '../store'
 import { activeProfile } from '@shared/types'
 import type { GenerateKind } from '@shared/types'
@@ -9,7 +9,8 @@ const KIND_LABEL: Record<GenerateKind, string> = {
   continue: '续写',
   polish: '润色',
   outline: '细纲',
-  summary: '前情摘要'
+  summary: '前情摘要',
+  consistency: '一致性检查'
 }
 
 /** 灵感模式的开局提问(点击即发送) */
@@ -284,7 +285,7 @@ export default function AIPanel() {
             {/* 本章辅助(前情摘要低频,默认折叠) */}
             <section className="mt-5">
               <h3 className="mb-2 text-[13px] font-semibold">本章辅助</h3>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
                   className="btn-outline"
                   disabled={disabled}
@@ -293,6 +294,15 @@ export default function AIPanel() {
                 >
                   <RefreshCw size={14} />
                   本章细纲
+                </button>
+                <button
+                  className="btn-outline"
+                  disabled={disabled || !content.trim()}
+                  title="对照人物卡/世界观/伏笔清单检查本章冲突"
+                  onClick={() => void runGenerate('consistency')}
+                >
+                  <SearchCheck size={14} />
+                  一致性检查
                 </button>
                 <button
                   className="btn-outline"
