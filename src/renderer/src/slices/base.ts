@@ -68,7 +68,7 @@ export interface BaseSlice {
   setSearchOpen: (open: boolean) => void
   setFocusMode: (on: boolean) => void
   updateSettings: (patch: Partial<AppSettings>) => Promise<void>
-  exportTxt: () => Promise<void>
+  exportTxt: (opts?: { doneOnly?: boolean }) => Promise<void>
 }
 
 export function baseSlice({ set, get }: SliceCtx): BaseSlice {
@@ -224,10 +224,10 @@ export function baseSlice({ set, get }: SliceCtx): BaseSlice {
       await window.api.settings.save(settings)
     },
 
-    exportTxt: async () => {
+    exportTxt: async (opts?: { doneOnly?: boolean }) => {
       const { bookDir } = get()
       if (!bookDir) return
-      const savedPath = await window.api.books.exportTxt(bookDir)
+      const savedPath = await window.api.books.exportTxt(bookDir, opts)
       if (savedPath) get().showToast(`已导出到:${savedPath}`)
     }
   }

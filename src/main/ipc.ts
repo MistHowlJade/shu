@@ -33,6 +33,7 @@ import { chunkText, parseJsonLoose } from '../shared/text'
 import {
   autoSnapshot,
   buildExportText,
+  buildVolumeExports,
   createBook,
   createChapter,
   deleteBook,
@@ -176,15 +177,46 @@ export function registerIpcHandlers(): void {
     await openBackupsFolder(ensureLibraryRoot(settings))
     return true
   })
-  ipcMain.handle('books:exportTxt', async (_e, dir: string) => {
+  ipcMain.handle('books:exportTxt', async (_e, dir: string, opts?: { doneOnly?: boolean }) => {
     const book = requireBook(assertBookDir(dir))
     const result = await dialog.showSaveDialog({
       title: '导出全书 TXT',
-      defaultPath: path.join(app.getPath('documents'), `${book.title}.txt`),
+      defaultPath: path.join(
+        app.getPath('documents'),
+        opts?.doneOnly ? `${book.title}-完章版.txt` : `${book.title}.txt`
+      ),
       filters: [{ name: '文本文件', extensions: ['txt'] }]
     })
     if (result.canceled || !result.filePath) return null
-    fs.writeFileSync(result.filePath, buildExportText(book, dir), 'utf-8')
+    fs.writeFileSync(result.filePath, buildExportText(book, dir, opts), 'utf-8')
+    return result.filePath
+  })
+
+  /* 分卷导出:每卷一个 TXT,写入用户选择的目录 */
+  ipcMain.handle('books:exportVolumes', async (_e, dir: string, opts?: { doneOnly?: boolean }) => {
+    const book = requireBook(assertBookDir(dir))
+    const result = await dialog.showOpenDialog({
+      title: '选择分卷导出目录',
+      properties: ['openDirectory', 'createDirectory']
+    })
+    if (result.canceled || !result.filePaths[0]) return null
+    const outDir = result.filePaths[0]
+    const files = buildVolumeExports(book, dir, opts)
+    for (const f of files) {
+      fs.writeFileSync(path.join(outDir, f.fileName), f.text, 'utf-8')
+    }
+    return { dir: outDir, files: files.map((f) => f.fileName) }
+  })
+
+  /* 通用文本保存(如对标大纲 .md):渲染端给内容,主进程弹保存框落盘 */
+  ipcMain.handle('app:saveTextFile', async (_e, payload: { defaultPath: string; content: string; filterName?: string }) => {
+    const result = await dialog.showSaveDialog({
+      title: '保存文件',
+      defaultPath: payload.defaultPath,
+      filters: [{ name: payload.filterName ?? '文本文件', extensions: [payload.defaultPath.split('.').pop() ?? 'txt'] }]
+    })
+    if (result.canceled || !result.filePath) return null
+    fs.writeFileSync(result.filePath, payload.content, 'utf-8')
     return result.filePath
   })
 

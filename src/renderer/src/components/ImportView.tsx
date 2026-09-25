@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Clipboard, FileSearch, FileText, Globe, Loader2, Plus, ScanSearch, Square, Trash2, X } from 'lucide-react'
-import { chunkText, scanSignature, useStore } from '../store'
+import { buildBenchmarkOutline, chunkText, scanSignature, useStore } from '../store'
 
 export default function ImportView() {
+  const book = useStore((s) => s.book)
   const importer = useStore((s) => s.importer)
   const importTxtFile = useStore((s) => s.importTxtFile)
   const importFromUrl = useStore((s) => s.importFromUrl)
@@ -199,14 +200,35 @@ export default function ImportView() {
       <div className="flex min-w-0 flex-1 flex-col overflow-auto p-5">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-semibold">扫描结果</h2>
-          <button
-            className="btn-outline !h-8 !px-2.5 !text-xs"
-            disabled={analyzing || !hasResults}
-            onClick={() => void applyScanToBook()}
-            title="把结果写入当前打开的书(自动去重)"
-          >
-            全部写入当前书
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              className="btn-outline !h-8 !px-2.5 !text-xs"
+              disabled={!hasResults}
+              onClick={() => {
+                const md = buildBenchmarkOutline(r, book?.title ?? '未命名')
+                void window.api.app
+                  .saveTextFile({
+                    defaultPath: (book?.title ?? '未命名') + '-对标大纲.md',
+                    content: md,
+                    filterName: 'Markdown'
+                  })
+                  .then((saved) => {
+                    if (saved) showToast('已导出对标大纲模板')
+                  })
+              }}
+              title="把拆书结果整理成对标大纲模板(.md),供大纲规划页参考"
+            >
+              导出对标大纲
+            </button>
+            <button
+              className="btn-outline !h-8 !px-2.5 !text-xs"
+              disabled={analyzing || !hasResults}
+              onClick={() => void applyScanToBook()}
+              title="把结果写入当前打开的书(自动去重)"
+            >
+              全部写入当前书
+            </button>
+          </div>
         </div>
 
         {!hasResults && !analyzing && (

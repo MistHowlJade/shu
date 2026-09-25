@@ -66,3 +66,42 @@ export function foreshadowMightResolve(text: string, content: string): boolean {
   if (keyword.length < 2) return false
   return content.includes(keyword)
 }
+
+/* ---------------- 拆书结果 → 对标大纲模板 ---------------- */
+
+/** 把拆书扫描结果整理成「本书对标大纲模板」的 Markdown 文本(供作者写大纲时参考) */
+export function buildBenchmarkOutline(
+  results: {
+    worldviewText: string
+    realms: string[]
+    characters: { name: string; role?: string }[]
+    items: { name: string; category?: string; grade?: string }[]
+  },
+  bookTitle: string
+): string {
+  const lines: string[] = []
+  lines.push('# 《' + bookTitle + '》对标大纲模板(由拆书结果生成)')
+  lines.push('')
+  lines.push('## 世界观要点')
+  lines.push(results.worldviewText.trim() || '(无)')
+  lines.push('')
+  lines.push('## 境界 / 等级体系')
+  lines.push(results.realms.join(' → ') || '(无)')
+  lines.push('')
+  lines.push('## 主要人物')
+  lines.push(results.characters.map((c) => '- ' + c.name + (c.role ? '(' + c.role + ')' : '')).join('\n') || '(无)')
+  lines.push('')
+  lines.push('## 功法 / 物品 / 材料')
+  lines.push(
+    results.items
+      .map((i) => '- ' + i.name + (i.category ? '[' + i.category + ']' : '') + (i.grade ? '·' + i.grade : ''))
+      .join('\n') || '(无)'
+  )
+  lines.push('')
+  lines.push('## 建议卷章节奏')
+  lines.push('- 开局 3 章内抛出金手指与首个爽点')
+  lines.push('- 每卷一个核心反派 / 核心目标,章末留钩子')
+  lines.push('- 每 2~3 章一次小高潮,10 章左右一次大高潮')
+  lines.push('')
+  return lines.join('\n')
+}

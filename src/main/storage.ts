@@ -13,7 +13,8 @@ import {
   type AppSettings,
   type Book,
   type Chapter,
-  type ChapterMeta
+  type ChapterMeta,
+  type Volume
 } from '../shared/types'
 
 /* ---------------- 基础工具 ---------------- */
@@ -741,7 +742,7 @@ export function searchBook(dir: string, query: string, limit = 100): SearchHit[]
 
 /* ---------------- 导出 ---------------- */
 
-export function buildExportText(book: Book, bookDir: string): string {
+export function buildExportText(book: Book, bookDir: string, opts?: { doneOnly?: boolean }): string {
   const lines: string[] = []
   lines.push(`《${book.title}》`)
   if (book.author) lines.push(`作者:${book.author}`)
@@ -754,6 +755,7 @@ export function buildExportText(book: Book, bookDir: string): string {
   const volumes = new Map(book.volumes.map((v) => [v.id, v]))
   let written = 0
   for (const [index, meta] of book.chapters.entries()) {
+    if (opts?.doneOnly && meta.status !== 'done') continue
     const chapter = readJson<Chapter>(path.join(chaptersDir(bookDir), meta.file))
     if (!chapter || !chapter.content.trim()) continue
     written++
@@ -769,4 +771,52 @@ export function buildExportText(book: Book, bookDir: string): string {
   }
   if (written === 0) lines.push('(尚无可导出的章节内容)')
   return lines.join('\n')
+}
+
+/* ---------------- 分卷导出(每卷一个 TXT) ---------------- */
+
+export interface VolumeExportFile {
+  fileName: string
+  text: string
+}
+
+/** 按卷拆分全书:每卷一个 TXT(可只导完成章),空卷跳过;章号为全书序号 */
+export function buildVolumeExports(
+  book: Book,
+  bookDir: string,
+  opts?: { doneOnly?: boolean }
+): VolumeExportFile[] {
+  const volumes = new Map(book.volumes.map((v) => [v.id, v]))
+  const groups: { volume: Volume; chapters: { index: number; meta: ChapterMeta }[] }[] = []
+  for (const [index, meta] of book.chapters.entries()) {
+    if (opts?.doneOnly && meta.status !== 'done') continue
+    const volume = volumes.get(meta.volumeId)
+    if (!volume) continue
+    let group = groups.find((g) => g.volume.id === volume.id)
+    if (!group) {
+      group = { volume, chapters: [] }
+      groups.push(group)
+    }
+    group.chapters.push({ index, meta })
+  }
+
+  const files: VolumeExportFile[] = []
+  for (const [order, group] of groups.entries()) {
+    if (group.chapters.length === 0) continue
+    const lines: string[] = []
+    lines.push(`《${book.title}》${group.volume.title}`)
+    if (book.author) lines.push(`作者:${book.author}`)
+    lines.push('')
+    for (const { index, meta } of group.chapters) {
+      const chapter = readJson<Chapter>(path.join(chaptersDir(bookDir), meta.file))
+      if (!chapter || !chapter.content.trim()) continue
+      lines.push(`第${index + 1}章 ${chapter.title}`)
+      lines.push('')
+      lines.push(chapter.content.trim())
+      lines.push('')
+    }
+    const fileName = `${sanitizeDirName(book.title)}-第${order + 1}卷-${sanitizeDirName(group.volume.title)}.txt`
+    files.push({ fileName, text: lines.join('\n') })
+  }
+  return files
 }

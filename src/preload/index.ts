@@ -20,7 +20,11 @@ const api = {
       ipcRenderer.invoke('books:create', info),
     save: (dir: string, book: Book): Promise<Book> => ipcRenderer.invoke('books:save', dir, book),
     remove: (dir: string): Promise<void> => ipcRenderer.invoke('books:delete', dir),
-    exportTxt: (dir: string): Promise<string | null> => ipcRenderer.invoke('books:exportTxt', dir),
+    exportTxt: (dir: string, opts?: { doneOnly?: boolean }): Promise<string | null> =>
+      ipcRenderer.invoke('books:exportTxt', dir, opts),
+    /** 分卷导出:每卷一个 TXT 到所选目录 */
+    exportVolumes: (dir: string, opts?: { doneOnly?: boolean }): Promise<{ dir: string; files: string[] } | null> =>
+      ipcRenderer.invoke('books:exportVolumes', dir, opts),
     /** 备份整本书;force=false 时 24 小时内已有快照则跳过(每日自动备份用) */
     backup: (dir: string, force: boolean): Promise<{ skipped: boolean; reason?: 'empty' | 'recent'; snapshotDir?: string }> =>
       ipcRenderer.invoke('books:backup', dir, force),
@@ -98,6 +102,9 @@ const api = {
     flush: (payload: { dir: string | null; book: Book | null; chapter: Chapter | null; content: string }): void => {
       ipcRenderer.sendSync('app:flush', payload)
     },
+    /** 通用文本保存(保存对话框) */
+    saveTextFile: (payload: { defaultPath: string; content: string; filterName?: string }): Promise<string | null> =>
+      ipcRenderer.invoke('app:saveTextFile', payload),
     /* 隐藏式标题栏:按窗口状态(正常/弹窗压暗/沉浸/书库)同步 Windows 悬浮按钮配色 */
     setThemeColors: (overlay: { color: string; symbolColor: string }): Promise<boolean> =>
       ipcRenderer.invoke('app:setThemeColors', overlay)

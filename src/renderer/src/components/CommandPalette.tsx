@@ -178,6 +178,26 @@ export default function CommandPalette() {
       })
       list.push({ id: 'export', label: '导出全书 TXT', group: '全局', icon: Download, run: () => void s.exportTxt() })
       list.push({
+        id: 'export-done',
+        label: '导出已完成章节 TXT',
+        group: '全局',
+        icon: Download,
+        run: () => void s.exportTxt({ doneOnly: true })
+      })
+      list.push({
+        id: 'export-volumes',
+        label: '分卷导出 TXT(每卷一个文件)',
+        group: '全局',
+        icon: Download,
+        run: () => {
+          void (async () => {
+            if (!s.bookDir) return
+            const r = await window.api.books.exportVolumes(s.bookDir)
+            if (r) s.showToast('已分卷导出 ' + r.files.length + ' 个文件')
+          })()
+        }
+      })
+      list.push({
         id: 'export-package',
         label: '导出整本书 · 工程包(换机迁移)',
         group: '全局',

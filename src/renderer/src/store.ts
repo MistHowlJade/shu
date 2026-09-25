@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import type { Book } from '@shared/types'
 /* 宽松 JSON 解析与文本切段在主/渲染两侧共用,统一实现 */
-export { chunkText, parseJsonLoose, foreshadowKeyword, foreshadowMightResolve } from '@shared/text'
+export { buildBenchmarkOutline, chunkText, parseJsonLoose, foreshadowKeyword, foreshadowMightResolve } from '@shared/text'
 
 import { baseSlice, type BaseSlice } from './slices/base'
 import { chaptersSlice, type ChaptersSlice } from './slices/chapters'
