@@ -80,7 +80,10 @@ const api = {
     /* 关窗前的同步兜底保存:阻塞至主进程写完磁盘再卸载页面 */
     flush: (payload: { dir: string | null; book: Book | null; chapter: Chapter | null; content: string }): void => {
       ipcRenderer.sendSync('app:flush', payload)
-    }
+    },
+    /* 隐藏式标题栏:按窗口状态(正常/弹窗压暗/沉浸/书库)同步 Windows 悬浮按钮配色 */
+    setThemeColors: (overlay: { color: string; symbolColor: string }): Promise<boolean> =>
+      ipcRenderer.invoke('app:setThemeColors', overlay)
   }
 }
 

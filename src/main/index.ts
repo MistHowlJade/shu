@@ -1,16 +1,49 @@
 import { app, BrowserWindow, shell } from 'electron'
+import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { registerIpcHandlers } from './ipc'
+import { loadSettings } from './storage'
+
+/* 开发模式开放远程调试端口,供自动化验证(如扫书结果核对)连接;打包版不受影响 */
+if (!app.isPackaged) {
+  app.commandLine.appendSwitch('remote-debugging-port', '9222')
+}
+
+/** 启动即读盘取主题,让窗口底色/标题栏按钮与首帧一致,避免深色用户看到白闪 */
+function startupTheme(): 'light' | 'dark' {
+  try {
+    return loadSettings().theme
+  } catch {
+    return 'light'
+  }
+}
 
 function createWindow(): void {
+  const dark = startupTheme() === 'dark'
+  /* 开发模式给窗口/任务栏挂仓库内图标;打包后 exe 已内嵌 electron-builder 生成的图标 */
+  const devIconPath = join(__dirname, '../../build/icon.png')
   const win = new BrowserWindow({
     width: 1440,
     height: 900,
     minWidth: 1100,
     minHeight: 700,
     title: 'AI网文工作台',
-    backgroundColor: '#f8fafc',
+    backgroundColor: dark ? '#0c0e12' : '#f3f3f5',
+    ...(existsSync(devIconPath) ? { icon: devIconPath } : {}),
     autoHideMenuBar: true,
+    /* 隐藏式标题栏:顶栏即标题栏(可拖动/双击最大化),Windows 用系统悬浮按钮 */
+    titleBarStyle: 'hidden',
+    ...(process.platform === 'win32'
+      ? {
+          titleBarOverlay: {
+            color: dark ? '#191d24' : '#ffffff',
+            symbolColor: dark ? '#e9ecf1' : '#17181b',
+            height: 48
+          }
+        }
+      : process.platform === 'darwin'
+        ? { trafficLightPosition: { x: 14, y: 16 } }
+        : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: true,

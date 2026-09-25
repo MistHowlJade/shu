@@ -1,4 +1,4 @@
-import { app, dialog, ipcMain, type WebContents } from 'electron'
+import { app, dialog, ipcMain, BrowserWindow, type WebContents } from 'electron'
 import * as path from 'node:path'
 import * as fs from 'node:fs'
 import { randomUUID } from 'node:crypto'
@@ -521,6 +521,20 @@ export function registerIpcHandlers(): void {
       return { ok: true, text: await fetchWebpageText(url) }
     } catch (err) {
       return { ok: false, error: err instanceof Error ? err.message : String(err) }
+    }
+  })
+
+  /* 标题栏隐藏后,系统悬浮按钮的底色/前景色由渲染层按窗口状态同步(仅 Windows 支持覆盖层) */
+  ipcMain.handle('app:setThemeColors', (_e, overlay: { color: string; symbolColor: string }) => {
+    const win = BrowserWindow.fromWebContents(_e.sender)
+    if (!win || process.platform !== 'win32') return false
+    const hex = /^#[0-9a-fA-F]{6}$/
+    if (!overlay || !hex.test(overlay.color ?? '') || !hex.test(overlay.symbolColor ?? '')) return false
+    try {
+      win.setTitleBarOverlay({ color: overlay.color, symbolColor: overlay.symbolColor })
+      return true
+    } catch {
+      return false
     }
   })
 }
