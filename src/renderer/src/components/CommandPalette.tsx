@@ -3,6 +3,7 @@ import { useFocusTrap } from '../hooks/useFocusTrap'
 import {
   BookOpen,
   Download,
+  FileArchive,
   FilePlus2,
   FolderOpen,
   Map as MapIcon,
@@ -176,6 +177,15 @@ export default function CommandPalette() {
         run: () => s.setAiOpen(!s.aiOpen)
       })
       list.push({ id: 'export', label: '导出全书 TXT', group: '全局', icon: Download, run: () => void s.exportTxt() })
+      list.push({
+        id: 'export-package',
+        label: '导出整本书 · 工程包(换机迁移)',
+        group: '全局',
+        icon: FileArchive,
+        run: () => {
+          if (s.bookDir) void window.api.books.exportPackage(s.bookDir)
+        }
+      })
     }
     list.push({ id: 'settings', label: '打开设置', group: '全局', icon: Settings, run: () => s.setSettingsOpen(true) })
     list.push({

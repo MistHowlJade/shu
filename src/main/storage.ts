@@ -517,7 +517,7 @@ function backupsRoot(libraryRoot: string): string {
  * 段错误(本机实测 ASCII 正常、中文 SIGSEGV),而书名目录几乎都是中文,一旦触发
  * 会把整个进程硬崩掉,连 try/catch 都拦不住。
  */
-function copyDir(src: string, dest: string): void {
+export function copyDir(src: string, dest: string): void {
   fs.mkdirSync(dest, { recursive: true })
   for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
     const s = path.join(src, entry.name)

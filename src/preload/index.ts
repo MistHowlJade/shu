@@ -25,7 +25,13 @@ const api = {
     backup: (dir: string, force: boolean): Promise<{ skipped: boolean; reason?: 'empty' | 'recent'; snapshotDir?: string }> =>
       ipcRenderer.invoke('books:backup', dir, force),
     /** 在资源管理器中打开备份目录 */
-    openBackups: (): Promise<boolean> => ipcRenderer.invoke('books:openBackups')
+    openBackups: (): Promise<boolean> => ipcRenderer.invoke('books:openBackups'),
+    /** 导出整本书工程包(zip:章节+设定+历史),返回包信息或 null(取消) */
+    exportPackage: (dir: string): Promise<{ title: string; chapterCount: number; file: string } | null> =>
+      ipcRenderer.invoke('books:exportPackage', dir),
+    /** 导入工程包到书库(创建新书,不覆盖已有书),返回导入结果或 null(取消) */
+    importPackage: (): Promise<{ title: string; chapterCount: number; dir: string; file: string } | null> =>
+      ipcRenderer.invoke('books:importPackage')
   },
   chapters: {
     read: (dir: string, chapterId: string): Promise<Chapter | null> =>

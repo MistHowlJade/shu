@@ -1,4 +1,4 @@
-import { Archive, FolderOpen, Plus, Settings, Trash2 } from 'lucide-react'
+import { Archive, FileArchive, FolderOpen, Plus, Settings, Trash2 } from 'lucide-react'
 import type { CSSProperties } from 'react'
 import { totalWords, useStore } from '../store'
 
@@ -39,6 +39,20 @@ export default function LibraryView() {
     return SPINES[h % SPINES.length]
   }
 
+  /* 工程包:整本书(章节+设定+历史)打包导出 / 从包导入为新书 */
+  async function exportPackage(dir: string): Promise<void> {
+    const r = await window.api.books.exportPackage(dir)
+    if (!r) return
+    showToast(`已导出《${r.title}》工程包(${r.chapterCount} 章)`)
+  }
+
+  async function importPackage(): Promise<void> {
+    const r = await window.api.books.importPackage()
+    if (!r) return
+    await useStore.getState().refreshBooks()
+    showToast(`已导入《${r.title}》(共 ${r.chapterCount} 章)`)
+  }
+
   return (
     <div className="relative h-full overflow-auto">
       {/* 顶部拖动条:补上被隐藏的系统标题栏的移动窗口能力 */}
@@ -63,6 +77,10 @@ export default function LibraryView() {
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
+            <button className="btn-outline" onClick={() => void importPackage()}>
+              <FileArchive size={15} />
+              导入工程包
+            </button>
             <button className="btn-outline" onClick={() => void changeLibraryRoot()}>
               <FolderOpen size={15} />
               书库目录
@@ -140,6 +158,16 @@ export default function LibraryView() {
                     </span>
                   )}
                   <span className="flex shrink-0 items-center">
+                    <button
+                      className="rounded p-1 t3 opacity-0 transition hover:text-[var(--accent)] group-hover:opacity-100"
+                      title="导出整本书工程包(章节+设定+历史,用于换机迁移)"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        void exportPackage(dir)
+                      }}
+                    >
+                      <FileArchive size={15} />
+                    </button>
                     <button
                       className="rounded p-1 t3 opacity-0 transition hover:text-[var(--text)] group-hover:opacity-100"
                       title="立即备份这本书(完整复制到 _backups 目录)"

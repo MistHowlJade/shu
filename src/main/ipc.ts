@@ -46,9 +46,11 @@ import {
   readPrecedingChapters,
   saveBook,
   saveChapter,
+  sanitizeDirName,
   saveSettings,
   snapshotBook
 } from './storage'
+import { buildBookPackage, importBookPackage } from './package'
 
 /* 流式增量按请求定向回传:不再用模块级 sender 共享,避免多窗口/窗口重建后发错目标 */
 function sendDelta(target: WebContents, requestId: string, delta: string): void {
@@ -179,6 +181,28 @@ export function registerIpcHandlers(): void {
     if (result.canceled || !result.filePath) return null
     fs.writeFileSync(result.filePath, buildExportText(book, dir), 'utf-8')
     return result.filePath
+  })
+
+  /* 整本书工程包:换机迁移(章节+设定+历史版本打进一个 zip) */
+  ipcMain.handle('books:exportPackage', async (_e, dir: string) => {
+    const book = requireBook(assertBookDir(dir))
+    const stamp = new Date().toISOString().slice(0, 10)
+    const result = await dialog.showSaveDialog({
+      title: '导出整本书工程包',
+      defaultPath: path.join(app.getPath('documents'), sanitizeDirName(book.title) + '-工程包-' + stamp + '.zip'),
+      filters: [{ name: 'AI网文工程包', extensions: ['zip'] }]
+    })
+    if (result.canceled || !result.filePath) return null
+    return buildBookPackage(assertBookDir(dir), result.filePath)
+  })
+  ipcMain.handle('books:importPackage', async () => {
+    const result = await dialog.showOpenDialog({
+      title: '导入整本书工程包(将在书库中创建新书,不覆盖已有书籍)',
+      filters: [{ name: 'AI网文工程包', extensions: ['zip'] }],
+      properties: ['openFile']
+    })
+    if (result.canceled || !result.filePaths[0]) return null
+    return importBookPackage(result.filePaths[0], ensureLibraryRoot(loadSettings()))
   })
 
   /* ---- 章节 ---- */
