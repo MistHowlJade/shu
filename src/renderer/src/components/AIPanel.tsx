@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ChevronDown, ChevronRight, Clipboard, Copy, CornerDownLeft, Eraser, Flag, Highlighter, Loader2, MessageCircle, RefreshCw, SearchCheck, Send, Settings, Square, Users, Wand2, X } from 'lucide-react'
+import { ChevronDown, ChevronRight, Clipboard, PenLine, Copy, CornerDownLeft, Eraser, Flag, Highlighter, Loader2, MessageCircle, RefreshCw, SearchCheck, Send, Settings, Square, Users, Wand2, X } from 'lucide-react'
 import { foreshadowMightResolve, totalWords, useStore } from '../store'
 import { activeProfile } from '@shared/types'
 import type { GenerateKind } from '@shared/types'
@@ -50,6 +50,8 @@ export default function AIPanel() {
   const setWorkspaceMode = useStore((s) => s.setWorkspaceMode)
   const updateSettings = useStore((s) => s.updateSettings)
   const runAutoWrite = useStore((s) => s.runAutoWrite)
+  const approveAutoWrite = useStore((s) => s.approveAutoWrite)
+  const skipAutoWrite = useStore((s) => s.skipAutoWrite)
   const stopAutoWrite = useStore((s) => s.stopAutoWrite)
   const sendInspire = useStore((s) => s.sendInspire)
   const stopInspire = useStore((s) => s.stopInspire)
@@ -63,10 +65,17 @@ export default function AIPanel() {
   )
   const [ask, setAsk] = useState('')
   const [autoCount, setAutoCount] = useState(3)
+  const [confirmEach, setConfirmEach] = useState(() => localStorage.getItem('autoWriteConfirm') === '1')
+  const [pendingDraft, setPendingDraft] = useState('')
   /* 前情摘要属低频操作,默认折叠减少界面静态信息 */
   const [summaryOpen, setSummaryOpen] = useState(false)
   const [profileMenu, setProfileMenu] = useState(false)
   const chatScrollRef = useRef<HTMLDivElement>(null)
+
+  /* 闸口弹出时同步细纲草稿,作者可改 */
+  useEffect(() => {
+    if (autoWrite?.pending) setPendingDraft(autoWrite.pending.outline)
+  }, [autoWrite?.pending])
 
   /* 新消息/流式输出时,对话区自动滚到底 */
   useEffect(() => {
@@ -249,7 +258,32 @@ export default function AIPanel() {
             {/* 自动连写 */}
             <section className="mt-5">
               <h3 className="mb-2 text-[13px] font-semibold">自动连写</h3>
-              {autoWrite?.running ? (
+              {autoWrite?.running && autoWrite.pending ? (
+                /* 人工闸口:细纲确认卡(作者可改稿) */
+                <div className="rounded-xl border p-3" style={{ borderColor: 'color-mix(in srgb, var(--accent) 35%, transparent)' }}>
+                  <p className="flex items-center gap-1.5 text-xs font-medium" style={{ color: 'var(--accent-ink)' }}>
+                    <PenLine size={12} />
+                    细纲确认:{autoWrite.currentTitle}
+                  </p>
+                  <textarea
+                    className="field-input mt-2 min-h-24 resize-y !text-xs"
+                    value={pendingDraft}
+                    onChange={(e) => setPendingDraft(e.target.value)}
+                  />
+                  <div className="mt-2 flex items-center gap-2">
+                    <button className="btn-primary !h-7 !text-xs" onClick={() => void approveAutoWrite(pendingDraft)}>
+                      <PenLine size={12} />
+                      按细纲写这章
+                    </button>
+                    <button className="btn-outline !h-7 !text-xs" onClick={() => void skipAutoWrite()}>
+                      跳过此章
+                    </button>
+                    <button className="btn-outline !h-7 !text-xs" onClick={() => void stopAutoWrite()}>
+                      停止
+                    </button>
+                  </div>
+                </div>
+              ) : autoWrite?.running ? (
                 <div className="flex items-center gap-2 text-xs" style={{ color: 'var(--accent-ink)' }}>
                   <Loader2 size={14} className="shrink-0 animate-spin" />
                   <span className="min-w-0 flex-1 truncate">
@@ -261,25 +295,39 @@ export default function AIPanel() {
                   </button>
                 </div>
               ) : (
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    min={1}
-                    max={20}
-                    value={autoCount}
-                    onChange={(e) => setAutoCount(Math.min(20, Math.max(1, parseInt(e.target.value, 10) || 1)))}
-                    className="field-input !w-14 !px-2 !py-1.5 !text-xs text-center"
-                  />
+                <>
+                  <label className="mb-2 flex cursor-pointer items-center gap-1.5 text-xs t3">
+                    <input
+                      type="checkbox"
+                      className="h-3.5 w-3.5 accent-[var(--accent)]"
+                      checked={confirmEach}
+                      onChange={(e) => {
+                        setConfirmEach(e.target.checked)
+                        localStorage.setItem('autoWriteConfirm', e.target.checked ? '1' : '0')
+                      }}
+                    />
+                    逐章确认细纲后再写(人工闸口)
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={1}
+                      max={20}
+                      value={autoCount}
+                      onChange={(e) => setAutoCount(Math.min(20, Math.max(1, parseInt(e.target.value, 10) || 1)))}
+                      className="field-input !w-14 !px-2 !py-1.5 !text-xs text-center"
+                    />
                   <span className="min-w-0 flex-1 text-xs t3">章 · 只写空白章</span>
                   <button
                     className="btn-outline !h-8 shrink-0 !text-xs"
                     disabled={!chapter}
-                    onClick={() => void runAutoWrite(autoCount)}
+                    onClick={() => void runAutoWrite(autoCount, confirmEach)}
                     title="从当前章往后,按大纲+前情记忆自动逐章生成;「写作意图」会应用于每一章"
                   >
                     开始连写
                   </button>
-                </div>
+                  </div>
+                </>
               )}
             </section>
 

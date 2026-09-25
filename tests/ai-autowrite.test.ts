@@ -3,7 +3,7 @@ import { DEFAULT_SETTINGS } from '../src/shared/types'
 import { useStore } from '../src/renderer/src/store'
 import type { Book, Chapter, ChapterMeta } from '../src/shared/types'
 
-const calls = { generate: [] as string[], savedFiles: [] as string[] }
+const calls = { generate: [] as string[], savedFiles: [] as string[], outline: [] as string[] }
 
 function meta(id: string, status: 'todo' | 'draft' | 'done', wordCount: number): ChapterMeta {
   return { id, volumeId: 'v1', file: id + '.json', title: id, status, wordCount, hasSummary: false, updatedAt: 1 }
@@ -14,6 +14,7 @@ const contents: Record<string, string> = {}
 function setupBook(): void {
   calls.generate.length = 0
   calls.savedFiles.length = 0
+  calls.outline.length = 0
   contents.chA = 'A'.repeat(1000)
   contents.chB = 'B'.repeat(800)
   contents.chC = ''
@@ -81,6 +82,10 @@ beforeEach(() => {
         generateChapter: async (input: { chapterId: string }) => {
           calls.generate.push(input.chapterId)
           return { ok: true, text: '生成的正文' }
+        },
+        generateOutline: async (input: { chapterId: string }) => {
+          calls.outline.push(input.chapterId)
+          return { ok: true, text: '细纲-' + input.chapterId }
         },
         summarize: async (input: { chapterId: string }) => {
           /* 主进程 summarize 会直接落盘摘要 */
@@ -155,5 +160,92 @@ describe('章节删除边界', () => {
     expect(s.book?.chapters.length).toBe(0)
     expect(s.chapter).toBeNull()
     expect(s.content).toBe('')
+  })
+})
+
+
+describe('自动连写 · 人工闸口', () => {
+  beforeEach(() => {
+    setupBook()
+    vi.stubGlobal('window', {
+      api: {
+        settings: { load: async () => ({ ...DEFAULT_SETTINGS }), save: async () => true },
+        books: { save: async (_d: string, book: Book) => book, backup: async () => ({ skipped: true }) },
+        chapters: {
+          read: async (_d: string, id: string) => ({
+            id,
+            volumeId: 'v1',
+            title: id,
+            outline: '',
+            content: contents[id] ?? '',
+            summary: '',
+            createdAt: 1,
+            updatedAt: 1
+          }),
+          save: async (_d: string, chapter: Chapter) => {
+            calls.savedFiles.push(chapter.id)
+            const wc = chapter.content.replace(/s/g, '').length
+            return {
+              chapter,
+              meta: {
+                id: chapter.id,
+                volumeId: chapter.volumeId,
+                file: chapter.id + '.json',
+                title: chapter.title,
+                status: wc > 0 ? 'draft' : 'todo',
+                wordCount: wc,
+                hasSummary: !!chapter.summary,
+                updatedAt: Date.now()
+              } as ChapterMeta
+            }
+          },
+          remove: async () => true
+        },
+        ai: {
+          onDelta: () => () => {},
+          generateChapter: async (input: { chapterId: string }) => {
+            calls.generate.push(input.chapterId)
+            return { ok: true, text: '生成的正文' }
+          },
+          generateOutline: async (input: { chapterId: string }) => {
+            calls.outline.push(input.chapterId)
+            return { ok: true, text: '细纲-' + input.chapterId }
+          },
+          summarize: async () => ({ ok: true, text: '摘要' }),
+          scanChapter: async () => ({
+            ok: true,
+            newCharacters: 0,
+            newItems: 0,
+            newRealms: 0,
+            worldAdded: false,
+            addedCharacters: [],
+            addedItems: [],
+            addedRealms: [],
+            addedWorldLines: []
+          }),
+          abort: async () => true
+        },
+        app: { flush: () => {}, setThemeColors: async () => true }
+      }
+    })
+  })
+
+  it('确认模式:先出细纲并暂停;批准后写正文;跳过则不写', async () => {
+    await useStore.getState().runAutoWrite(2, true)
+    /* chC 先出细纲并暂停,还没写正文 */
+    expect(calls.outline).toEqual(['chC'])
+    expect(calls.generate).toEqual([])
+    expect(useStore.getState().autoWrite?.pending?.outline).toBe('细纲-chC')
+
+    /* 批准:写 chC 正文,然后 chD 进入细纲确认 */
+    await useStore.getState().approveAutoWrite()
+    expect(calls.generate).toEqual(['chC'])
+    expect(useStore.getState().autoWrite?.pending?.outline).toBe('细纲-chD')
+
+    /* 跳过 chD:连写结束,chD 保持待写 */
+    await useStore.getState().skipAutoWrite()
+    expect(useStore.getState().autoWrite).toBeNull()
+    expect(useStore.getState().book?.chapters.find((c) => c.id === 'chD')?.status).toBe('todo')
+    expect(calls.generate).toEqual(['chC'])
   })
 })

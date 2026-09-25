@@ -1,4 +1,4 @@
-import type { AiResult, GenerateKind } from '@shared/types'
+import type { AiResult, ChapterMeta, GenerateKind } from '@shared/types'
 import type { StoreState } from '../store'
 import { uid, type AIRequest, type SliceCtx } from './types'
 
@@ -10,8 +10,18 @@ export interface AISlice {
   aiError: string | null
   aiIntent: string
   aiLastKind: GenerateKind | null
-  /** 自动连写状态;null 表示未在连写 */
-  autoWrite: { running: boolean; total: number; done: number; currentTitle: string; stop: boolean } | null
+  /** 自动连写状态;null 表示未在连写。confirmEach = 逐章确认细纲的人工闸口模式 */
+  autoWrite: {
+    running: boolean
+    total: number
+    done: number
+    currentTitle: string
+    stop: boolean
+    confirmEach: boolean
+    targets: ChapterMeta[]
+    index: number
+    pending: { outline: string } | null
+  } | null
 
   setAiIntent: (text: string) => void
   runGenerate: (kind: GenerateKind) => Promise<void>
@@ -23,7 +33,17 @@ export interface AISlice {
   applyOutputToOutline: (mode: 'set' | 'append') => Promise<void>
   copyOutput: () => Promise<void>
   clearAiOutput: () => void
-  runAutoWrite: (count: number) => Promise<void>
+  runAutoWrite: (count: number, confirmEach?: boolean) => Promise<void>
+  /** 自动连写推进:写下一章 / 在确认模式下等待批准后继续 */
+  stepAutoWrite: () => Promise<void>
+  /** 人工闸口:批准当前细纲(可带作者修改稿),开始写这一章 */
+  approveAutoWrite: (outline?: string) => Promise<void>
+  /** 人工闸口:跳过当前章,继续下一章 */
+  skipAutoWrite: () => Promise<void>
+  /** @internal 自动连写:收尾(清状态 + 汇总提示) */
+  finishAutoWrite: () => Promise<void>
+  /** @internal 自动连写:生成正文 → 落盘 → 生成摘要 → 计数 */
+  writeCurrentChapter: () => Promise<void>
   stopAutoWrite: () => Promise<void>
 }
 
@@ -175,7 +195,35 @@ export function aiSlice({ set, get }: SliceCtx): AISlice {
 
     clearAiOutput: () => set({ aiOutput: '', aiError: null, aiLastKind: null }),
 
-    runAutoWrite: async (count) => {
+
+    /* ---- 自动连写内部工具 ---- */
+    finishAutoWrite: async () => {
+      const aw = get().autoWrite
+      const done = aw?.done ?? 0
+      const stopped = aw?.stop ?? false
+      set({ autoWrite: null })
+      get().showToast(stopped ? `自动连写已停止,完成 ${done} 章` : `自动连写完成,共 ${done} 章`)
+    },
+
+    writeCurrentChapter: async () => {
+      await get().runGenerate('chapter')
+      /* 失败(含手动停止、限流)即终止整轮连写 */
+      if (get().aiError) {
+        await get().finishAutoWrite()
+        return
+      }
+      const output = get().aiOutput
+      if (output.trim()) {
+        get().setContent(output.trim())
+        await get().saveNow()
+      }
+      /* 摘要供后续章节的记忆系统使用,失败不中断 */
+      await get().runGenerate('summary')
+      const aw = get().autoWrite
+      if (aw) set({ autoWrite: { ...aw, done: aw.done + 1 } })
+    },
+
+    runAutoWrite: async (count, confirmEach = false) => {
       const { autoWrite, book, bookDir } = get()
       if (autoWrite?.running || !book || !bookDir) return
       /* 只写「待写」且正文为空的章节:状态被点回「待写」但已有正文的章一律跳过,绝不覆盖 */
@@ -189,30 +237,73 @@ export function aiSlice({ set, get }: SliceCtx): AISlice {
         )
         return
       }
-      set({ autoWrite: { running: true, total: targets.length, done: 0, currentTitle: targets[0].title, stop: false } })
-      if (!get().aiOpen && !get().focusMode) get().setAiOpen(true)
-      let done = 0
-      for (const meta of targets) {
-        if (get().autoWrite?.stop) break
-        const aw = get().autoWrite
-        if (aw) set({ autoWrite: { ...aw, currentTitle: meta.title } })
-        await get().selectChapter(meta.id)
-        await get().runGenerate('chapter')
-        /* 失败(含手动停止、限流)即终止整轮连写 */
-        if (get().aiError) break
-        const output = get().aiOutput
-        if (output.trim()) {
-          get().setContent(output.trim())
-          await get().saveNow()
+      set({
+        autoWrite: {
+          running: true,
+          total: targets.length,
+          done: 0,
+          currentTitle: targets[0].title,
+          stop: false,
+          confirmEach,
+          targets,
+          index: 0,
+          pending: null
         }
-        /* 摘要供后续章节的记忆系统使用,失败不中断 */
-        await get().runGenerate('summary')
-        done++
-        set((s) => ({ autoWrite: s.autoWrite ? { ...s.autoWrite, done: s.autoWrite.done + 1 } : s.autoWrite }))
+      })
+      if (!get().aiOpen && !get().focusMode) get().setAiOpen(true)
+      await get().stepAutoWrite()
+    },
+
+    stepAutoWrite: async () => {
+      let aw = get().autoWrite
+      if (!aw?.running) return
+      if (aw.stop || aw.index >= aw.targets.length) {
+        await get().finishAutoWrite()
+        return
       }
-      const stopped = get().autoWrite?.stop ?? false
-      set({ autoWrite: null })
-      get().showToast(stopped ? `自动连写已停止,完成 ${done}/${targets.length} 章` : `自动连写完成,共 ${done} 章`)
+      const meta = aw.targets[aw.index]
+      set({ autoWrite: { ...aw, currentTitle: meta.title } })
+      await get().selectChapter(meta.id)
+      aw = get().autoWrite
+      if (!aw?.running || aw.stop) {
+        await get().finishAutoWrite()
+        return
+      }
+      /* 人工闸口:先生成细纲,等作者批准/跳过 */
+      if (aw.confirmEach) {
+        await get().runGenerate('outline')
+        const outline = get().aiOutput
+        const cur = get().autoWrite
+        if (cur) set({ autoWrite: { ...cur, pending: { outline } } })
+        return
+      }
+      await get().writeCurrentChapter()
+      aw = get().autoWrite
+      if (!aw) return
+      set({ autoWrite: { ...aw, index: aw.index + 1 } })
+      await get().stepAutoWrite()
+    },
+
+    approveAutoWrite: async (outline) => {
+      const aw = get().autoWrite
+      if (!aw?.pending) return
+      /* 作者批准(可能改过)的细纲写进本章,再开始写正文 */
+      get().setOutline(outline ?? aw.pending.outline)
+      await get().saveNow()
+      const cur = get().autoWrite
+      if (cur) set({ autoWrite: { ...cur, pending: null } })
+      await get().writeCurrentChapter()
+      const next = get().autoWrite
+      if (!next) return
+      set({ autoWrite: { ...next, index: next.index + 1 } })
+      await get().stepAutoWrite()
+    },
+
+    skipAutoWrite: async () => {
+      const aw = get().autoWrite
+      if (!aw?.pending) return
+      set({ autoWrite: { ...aw, pending: null, index: aw.index + 1 } })
+      await get().stepAutoWrite()
     },
 
     stopAutoWrite: async () => {

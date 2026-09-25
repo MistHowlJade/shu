@@ -3,6 +3,7 @@ import { useState } from 'react'
 import type { CSSProperties } from 'react'
 import { totalWords, useStore } from '../store'
 import BackupModal from './BackupModal'
+import HeatmapModal from './HeatmapModal'
 
 /* 隐藏式标题栏:书库页没有顶栏,顶部留一条可拖动区域用于移动窗口 */
 const DRAG = { WebkitAppRegion: 'drag', height: 44 } as CSSProperties
@@ -17,6 +18,7 @@ export default function LibraryView() {
   const showToast = useStore((s) => s.showToast)
   const updateSettings = useStore((s) => s.updateSettings)
   const [backupFor, setBackupFor] = useState<{ dir: string; title: string } | null>(null)
+  const [heatFor, setHeatFor] = useState<{ bookId: string; title: string } | null>(null)
 
   async function changeLibraryRoot() {
     const dir = await window.api.dialog.pickFolder()
@@ -205,7 +207,16 @@ export default function LibraryView() {
                     style={{ borderColor: 'var(--border)' }}
                   >
                     <span>{book.chapters.length} 章</span>
-                    <span>{totalWords(book).toLocaleString('zh-CN')} 字</span>
+                    <button
+                      className="transition hover:text-[var(--accent)]"
+                      title="查看码字热力图"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setHeatFor({ bookId: book.id, title: book.title })
+                      }}
+                    >
+                      {totalWords(book).toLocaleString('zh-CN')} 字
+                    </button>
                     <span className="ml-auto">{new Date(book.updatedAt).toLocaleDateString('zh-CN')}</span>
                   </div>
                 </div>
@@ -216,6 +227,7 @@ export default function LibraryView() {
       </div>
 
       {backupFor && <BackupModal dir={backupFor.dir} title={backupFor.title} onClose={() => setBackupFor(null)} />}
+      {heatFor && <HeatmapModal bookId={heatFor.bookId} title={heatFor.title} onClose={() => setHeatFor(null)} />}
     </div>
   )
 }

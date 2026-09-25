@@ -1,6 +1,7 @@
 import type { Book, Chapter, ChapterStatus, Volume } from '@shared/types'
 import type { StoreState } from '../store'
 import { persistBook } from './base'
+import { recordDailyWords } from '../heatmap'
 import { uid, type SliceCtx } from './types'
 
 /** 章节切片:选章、正文编辑与保存、章节/卷结构、历史版本 */
@@ -83,6 +84,8 @@ export function chaptersSlice({ set, get }: SliceCtx): ChaptersSlice {
           const chapters = state.book.chapters.map((c) => (c.id === meta.id ? meta : c))
           return { chapter: { ...saved, content: state.content }, book: { ...state.book, chapters }, dirty: false, savedAt: Date.now() }
         })
+        const updated = get().book
+        if (updated) recordDailyWords(updated)
       } catch (err) {
         get().showToast(`保存失败:${err instanceof Error ? err.message : String(err)}`, 'error')
       }

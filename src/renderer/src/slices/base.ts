@@ -2,6 +2,7 @@ import type { AppSettings, Book, BookSummary, Theme } from '@shared/types'
 import { DEFAULT_SETTINGS } from '@shared/types'
 import type { StoreState } from '../store'
 import { loadInspire, type SliceCtx, type WorkspaceMode } from './types'
+import { recordDailyWords } from '../heatmap'
 
 const initialSettings: AppSettings = structuredClone(DEFAULT_SETTINGS)
 
@@ -22,6 +23,7 @@ export async function persistBook(ctx: SliceCtx, mutate?: (draft: Book) => void)
   mutate?.(draft)
   const saved = await window.api.books.save(bookDir, draft)
   ctx.set({ book: saved })
+  recordDailyWords(saved)
 }
 
 /** 应用骨架切片:书库、当前书、设置、主题、视图切换、备份、导出 */
