@@ -686,6 +686,59 @@ export function autoSnapshot(
   return { created: true }
 }
 
+/* ---------------- 全文搜索(全书章节:标题/细纲/摘要/正文) ---------------- */
+
+export interface SearchHit {
+  chapterId: string
+  title: string
+  /** 命中来源:标题 / 细纲 / 摘要 / 正文 */
+  where: '标题' | '细纲' | '摘要' | '正文'
+  /** 命中位置的上下文片段(正文命中时) */
+  snippet: string
+  /** 该章命中次数 */
+  count: number
+}
+
+/** 全书搜索:大小写不敏感,返回按命中次数排序的章节结果(附首个命中上下文) */
+export function searchBook(dir: string, query: string, limit = 100): SearchHit[] {
+  const q = query.trim().toLowerCase()
+  if (!q) return []
+  const book = readBook(dir)
+  if (!book) return []
+
+  const hits: SearchHit[] = []
+  for (const meta of book.chapters) {
+    const chapter = readJson<Chapter>(path.join(chaptersDir(dir), meta.file))
+    const title = meta.title
+    const outline = chapter?.outline ?? ''
+    const summary = chapter?.summary ?? ''
+    const content = chapter?.content ?? ''
+
+    const countIn = (text: string): number => text.toLowerCase().split(q).length - 1
+    const count =
+      countIn(title) + countIn(outline) + countIn(summary) + countIn(content)
+    if (count === 0) continue
+
+    let where: SearchHit['where'] = '正文'
+    if (countIn(title) > 0) where = '标题'
+    else if (countIn(summary) > 0) where = '摘要'
+    else if (countIn(outline) > 0) where = '细纲'
+
+    let snippet = ''
+    const idx = content.toLowerCase().indexOf(q)
+    if (idx !== -1) {
+      const start = Math.max(0, idx - 20)
+      const end = Math.min(content.length, idx + q.length + 30)
+      snippet = (start > 0 ? '…' : '') + content.slice(start, end).replace(/\n+/g, ' ') + (end < content.length ? '…' : '')
+    } else {
+      snippet = (outline || summary || title).slice(0, 60)
+    }
+    hits.push({ chapterId: meta.id, title, where, snippet, count })
+    if (hits.length >= limit) break
+  }
+  return hits.sort((a, b) => b.count - a.count)
+}
+
 /* ---------------- 导出 ---------------- */
 
 export function buildExportText(book: Book, bookDir: string): string {

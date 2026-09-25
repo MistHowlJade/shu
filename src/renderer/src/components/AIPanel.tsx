@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { ChevronDown, ChevronRight, Clipboard, SearchCheck, Copy, CornerDownLeft, Eraser, Highlighter, Loader2, MessageCircle, RefreshCw, Send, Settings, Square, Users, Wand2, X } from 'lucide-react'
-import { totalWords, useStore } from '../store'
+import { ChevronDown, ChevronRight, Clipboard, Copy, CornerDownLeft, Eraser, Flag, Highlighter, Loader2, MessageCircle, RefreshCw, SearchCheck, Send, Settings, Square, Users, Wand2, X } from 'lucide-react'
+import { foreshadowMightResolve, totalWords, useStore } from '../store'
 import { activeProfile } from '@shared/types'
 import type { GenerateKind } from '@shared/types'
 
@@ -55,6 +55,7 @@ export default function AIPanel() {
   const stopInspire = useStore((s) => s.stopInspire)
   const clearInspire = useStore((s) => s.clearInspire)
   const insertInspire = useStore((s) => s.insertInspire)
+  const updateWorldview = useStore((s) => s.updateWorldview)
   const showToast = useStore((s) => s.showToast)
 
   const [tab, setTab] = useState<'gen' | 'chat'>(() =>
@@ -425,6 +426,45 @@ export default function AIPanel() {
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* 伏笔联动:摘要生成后提示可能回收的伏笔,一键标记进设定中心 */}
+            {aiLastKind === 'summary' && !aiRunning && (book?.worldview.foreshadows ?? []).some((f) => !f.resolved) && (
+              <div className="mt-4 shrink-0">
+                <div className="mb-1.5 flex items-center gap-1.5 text-xs font-medium t2">
+                  <Flag size={12} className="accent" />
+                  伏笔联动 · 逐条确认本章是否回收
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {(book?.worldview.foreshadows ?? [])
+                    .filter((f) => !f.resolved)
+                    .map((f) => {
+                      const possible = foreshadowMightResolve(f.text, content)
+                      return (
+                        <button
+                          key={f.id}
+                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs transition ${possible ? '' : 't3'}`}
+                          style={possible ? { background: 'var(--accent-soft)', color: 'var(--accent-ink)' } : { background: 'var(--panel-2)' }}
+                          title={possible ? '本章正文提到该伏笔,点击标记为已回收' : '点击标记为已回收'}
+                          onClick={() => {
+                            if (!book) return
+                            updateWorldview({
+                              foreshadows: (book.worldview.foreshadows ?? []).map((x) =>
+                                x.id === f.id ? { ...x, resolved: true } : x
+                              )
+                            })
+                            void useStore.getState().updateBook(() => undefined)
+                            showToast(possible ? `已标记「${f.text}」为已回收(正文命中)` : `已标记「${f.text}」为已回收`)
+                          }}
+                        >
+                          <Flag size={10} className={possible ? 'accent' : undefined} />
+                          {f.text}
+                          {possible && <span>· 可能已回收</span>}
+                        </button>
+                      )
+                    })}
+                </div>
               </div>
             )}
           </div>

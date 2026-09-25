@@ -1,4 +1,4 @@
-import { ArrowLeft, Maximize2, Search, Settings, Sparkles, Sun, Moon, Loader2 } from 'lucide-react'
+import { ArrowLeft, Command, Maximize2, Search, Settings, Sparkles, Sun, Moon, Loader2 } from 'lucide-react'
 import type { CSSProperties } from 'react'
 import { totalWords, useStore } from '../store'
 import type { WorkspaceMode } from '../store'
@@ -26,6 +26,7 @@ export default function TopBar() {
   const setWorkspaceMode = useStore((s) => s.setWorkspaceMode)
   const backToLibrary = useStore((s) => s.backToLibrary)
   const setPaletteOpen = useStore((s) => s.setPaletteOpen)
+  const setSearchOpen = useStore((s) => s.setSearchOpen)
   const setSettingsOpen = useStore((s) => s.setSettingsOpen)
   const aiOpen = useStore((s) => s.aiOpen)
   const setAiOpen = useStore((s) => s.setAiOpen)
@@ -97,8 +98,11 @@ export default function TopBar() {
         >
           {aiRunning ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
         </button>
+        <button className="btn-ghost !h-8 !w-8 !px-0" title="全书搜索 (Ctrl+Shift+F)" onClick={() => setSearchOpen(true)}>
+          <Search size={15} />
+        </button>
         <button className="btn-ghost !h-8 !px-2" title="命令面板 (Ctrl+K)" onClick={() => setPaletteOpen(true)}>
-          <Search size={14} />
+          <Command size={14} />
           <span className="kbd hidden sm:inline-flex">Ctrl K</span>
         </button>
         <button

@@ -39,6 +39,8 @@ export interface BaseSlice {
   paletteOpen: boolean
   /** AI 助手抽屉:按需从右侧滑出,生成时自动弹出;展开状态记忆到 localStorage */
   aiOpen: boolean
+  /** 全书搜索浮层(Ctrl+Shift+F) */
+  searchOpen: boolean
   /** 沉浸写作模式:隐藏导航栏/侧栏/AI 面板,只留正文 */
   focusMode: boolean
   /** 系统当前是否深色(theme = 'system' 时决定实际主题;由 matchMedia 监听维护) */
@@ -61,6 +63,7 @@ export interface BaseSlice {
   setCreateBookOpen: (open: boolean) => void
   setPaletteOpen: (open: boolean) => void
   setAiOpen: (open: boolean) => void
+  setSearchOpen: (open: boolean) => void
   setFocusMode: (on: boolean) => void
   updateSettings: (patch: Partial<AppSettings>) => Promise<void>
   exportTxt: () => Promise<void>
@@ -79,6 +82,7 @@ export function baseSlice({ set, get }: SliceCtx): BaseSlice {
     createBookOpen: false,
     paletteOpen: false,
     aiOpen: storedDrawerOpen(),
+    searchOpen: false,
     focusMode: false,
     systemDark:
       typeof window !== 'undefined' && typeof window.matchMedia === 'function'
@@ -200,6 +204,7 @@ export function baseSlice({ set, get }: SliceCtx): BaseSlice {
     setSettingsOpen: (open) => set({ settingsOpen: open }),
     setCreateBookOpen: (open) => set({ createBookOpen: open }),
     setPaletteOpen: (open) => set({ paletteOpen: open }),
+    setSearchOpen: (open) => set({ searchOpen: open }),
     setAiOpen: (open) => {
       set({ aiOpen: open })
       try {

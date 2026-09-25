@@ -13,6 +13,7 @@ import SettingsModal from './components/SettingsModal'
 import CreateBookModal from './components/CreateBookModal'
 import HistoryModal from './components/HistoryModal'
 import CommandPalette from './components/CommandPalette'
+import SearchModal from './components/SearchModal'
 import Toast from './components/Toast'
 
 const MODE_KEYS: Record<string, WorkspaceMode> = {
@@ -34,6 +35,7 @@ export default function App() {
   const settingsOpen = useStore((s) => s.settingsOpen)
   const createBookOpen = useStore((s) => s.createBookOpen)
   const paletteOpen = useStore((s) => s.paletteOpen)
+  const searchOpen = useStore((s) => s.searchOpen)
   const historyOpen = useStore((s) => s.historyOpen)
   const theme = useStore((s) => s.settings.theme)
   const systemDark = useStore((s) => s.systemDark)
@@ -96,6 +98,12 @@ export default function App() {
         s.setPaletteOpen(!s.paletteOpen)
         return
       }
+      if (mod && e.shiftKey && e.key.toLowerCase() === 'f') {
+        e.preventDefault()
+        const s = useStore.getState()
+        if (s.view === 'workspace') s.setSearchOpen(!s.searchOpen)
+        return
+      }
       if (mod && e.key.toLowerCase() === 'i') {
         e.preventDefault()
         const s = useStore.getState()
@@ -138,6 +146,7 @@ export default function App() {
         else if (s.settingsOpen) s.setSettingsOpen(false)
         else if (s.createBookOpen) s.setCreateBookOpen(false)
         else if (s.historyOpen) s.setHistoryOpen(false)
+        else if (s.searchOpen) s.setSearchOpen(false)
         else if (s.aiOpen) s.setAiOpen(false)
         else if (s.focusMode) s.setFocusMode(false)
       }
@@ -258,6 +267,7 @@ export default function App() {
         </button>
       )}
 
+      {view === 'workspace' && searchOpen && <SearchModal onClose={() => useStore.getState().setSearchOpen(false)} />}
       <CommandPalette />
       <SettingsModal />
       <CreateBookModal />

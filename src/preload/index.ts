@@ -35,6 +35,9 @@ const api = {
     /** 列出这本书的备份快照(新→旧) */
     snapshots: (dir: string): Promise<{ name: string; time: number; chapterCount: number }[]> =>
       ipcRenderer.invoke('books:snapshots', dir),
+    /** 全书搜索:标题/细纲/摘要/正文 */
+    searchBook: (dir: string, query: string): Promise<{ chapterId: string; title: string; where: string; snippet: string; count: number }[]> =>
+      ipcRenderer.invoke('search:book', dir, query),
     /** 恢复到某个快照(恢复前自动拍「恢复前」兜底快照) */
     restoreSnapshot: (dir: string, name: string): Promise<Book> =>
       ipcRenderer.invoke('books:restoreSnapshot', dir, name)

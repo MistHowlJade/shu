@@ -47,6 +47,7 @@ import {
   readChapter,
   readChapterSnapshot,
   readPrecedingChapters,
+  searchBook,
   restoreSnapshot,
   saveBook,
   saveChapter,
@@ -218,6 +219,9 @@ export function registerIpcHandlers(): void {
     const settings = loadSettings()
     return restoreSnapshot(ensureLibraryRoot(settings), assertBookDir(dir), name)
   })
+
+  /* 全书搜索:标题/细纲/摘要/正文,命中按次数排序 */
+  ipcMain.handle('search:book', (_e, dir: string, query: string) => searchBook(assertBookDir(dir), query))
 
   /* ---- 章节 ---- */
   ipcMain.handle('chapters:read', (_e, dir: string, chapterId: string) =>
