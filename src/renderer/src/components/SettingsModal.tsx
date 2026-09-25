@@ -14,6 +14,8 @@ export default function SettingsModal() {
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null)
   const [showKey, setShowKey] = useState(false)
+  /* 配置较多时的搜索过滤(只影响展示,不影响保存的数据) */
+  const [profileQuery, setProfileQuery] = useState('')
 
   /* 每次打开弹窗时同步最新配置 */
   useEffect(() => {
@@ -132,10 +134,22 @@ export default function SettingsModal() {
           <section>
             <h3 className="serif mb-2 text-sm font-semibold tracking-wider">AI 模型配置</h3>
 
-            {/* 配置列表:点谁用谁;数量多时限高滚动,一键只留当前 */}
+            {/* 配置列表:点谁用谁;数量多时先搜索再限高滚动,一键只留当前 */}
+            {draft.ai.profiles.length > 8 && (
+              <input
+                className="field-input mb-2 !py-1.5 !text-xs"
+                placeholder={`搜索 ${draft.ai.profiles.length} 个配置(名称或模型)…`}
+                value={profileQuery}
+                onChange={(e) => setProfileQuery(e.target.value)}
+              />
+            )}
             <div className="mb-3 flex flex-wrap items-center gap-1.5">
               <div className="flex max-h-36 flex-wrap items-center gap-1.5 overflow-y-auto">
-                {draft.ai.profiles.map((p) => (
+                {draft.ai.profiles.filter((p) => {
+                  const q = profileQuery.trim().toLowerCase()
+                  if (!q) return true
+                  return `${p.name} ${p.model}`.toLowerCase().includes(q)
+                }).map((p) => (
                   <span
                     key={p.id}
                     className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-medium transition ${
@@ -354,13 +368,13 @@ export default function SettingsModal() {
           <section>
             <h3 className="serif mb-2 text-sm font-semibold tracking-wider">外观</h3>
             <div className="flex gap-2">
-              {(['light', 'dark'] as const).map((t) => (
+              {(['light', 'system', 'dark'] as const).map((t) => (
                 <button
                   key={t}
                   className={`btn-outline !px-3 !py-1 !text-xs ${draft.theme === t ? 'active' : ''}`}
                   onClick={() => setDraft((d) => ({ ...d, theme: t }))}
                 >
-                  {t === 'light' ? '浅色' : '深色'}
+                  {t === 'light' ? '浅色' : t === 'system' ? '跟随系统' : '深色'}
                 </button>
               ))}
             </div>

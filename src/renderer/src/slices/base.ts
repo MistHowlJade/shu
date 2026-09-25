@@ -41,6 +41,8 @@ export interface BaseSlice {
   aiOpen: boolean
   /** 沉浸写作模式:隐藏导航栏/侧栏/AI 面板,只留正文 */
   focusMode: boolean
+  /** 系统当前是否深色(theme = 'system' 时决定实际主题;由 matchMedia 监听维护) */
+  systemDark: boolean
   toast: { id: number; kind: 'info' | 'error'; message: string } | null
 
   init: () => Promise<void>
@@ -78,10 +80,15 @@ export function baseSlice({ set, get }: SliceCtx): BaseSlice {
     paletteOpen: false,
     aiOpen: storedDrawerOpen(),
     focusMode: false,
+    systemDark:
+      typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+        ? window.matchMedia('(prefers-color-scheme: dark)').matches
+        : false,
     toast: null,
 
     applyTheme: (theme) => {
-      document.documentElement.classList.toggle('dark', theme === 'dark')
+      const dark = theme === 'dark' || (theme === 'system' && get().systemDark)
+      document.documentElement.classList.toggle('dark', dark)
     },
 
     showToast: (message, kind = 'info') => {
@@ -94,6 +101,15 @@ export function baseSlice({ set, get }: SliceCtx): BaseSlice {
 
     init: async () => {
       const settings = await window.api.settings.load()
+      /* 跟随系统主题:监听系统深浅切换,实时更新 systemDark 并重解析主题 */
+      if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+        const mq = window.matchMedia('(prefers-color-scheme: dark)')
+        mq.addEventListener('change', () => {
+          set({ systemDark: mq.matches })
+          get().applyTheme(get().settings.theme)
+        })
+        set({ systemDark: mq.matches })
+      }
       get().applyTheme(settings.theme)
       set({ settings })
       await get().refreshBooks()

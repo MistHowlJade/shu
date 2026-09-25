@@ -31,7 +31,13 @@ const api = {
       ipcRenderer.invoke('books:exportPackage', dir),
     /** 导入工程包到书库(创建新书,不覆盖已有书),返回导入结果或 null(取消) */
     importPackage: (): Promise<{ title: string; chapterCount: number; dir: string; file: string } | null> =>
-      ipcRenderer.invoke('books:importPackage')
+      ipcRenderer.invoke('books:importPackage'),
+    /** 列出这本书的备份快照(新→旧) */
+    snapshots: (dir: string): Promise<{ name: string; time: number; chapterCount: number }[]> =>
+      ipcRenderer.invoke('books:snapshots', dir),
+    /** 恢复到某个快照(恢复前自动拍「恢复前」兜底快照) */
+    restoreSnapshot: (dir: string, name: string): Promise<Book> =>
+      ipcRenderer.invoke('books:restoreSnapshot', dir, name)
   },
   chapters: {
     read: (dir: string, chapterId: string): Promise<Chapter | null> =>

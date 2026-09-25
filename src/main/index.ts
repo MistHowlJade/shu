@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell } from 'electron'
+import { app, BrowserWindow, nativeTheme, shell } from 'electron'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { registerIpcHandlers } from './ipc'
@@ -9,17 +9,18 @@ if (!app.isPackaged) {
   app.commandLine.appendSwitch('remote-debugging-port', '9222')
 }
 
-/** 启动即读盘取主题,让窗口底色/标题栏按钮与首帧一致,避免深色用户看到白闪 */
-function startupTheme(): 'light' | 'dark' {
+/** 启动即读盘取主题(含跟随系统),让窗口底色/标题栏按钮与首帧一致,避免深色用户看到白闪 */
+function startupIsDark(): boolean {
   try {
-    return loadSettings().theme
+    const theme = loadSettings().theme
+    return theme === 'dark' || (theme === 'system' && nativeTheme.shouldUseDarkColors)
   } catch {
-    return 'light'
+    return false
   }
 }
 
 function createWindow(): void {
-  const dark = startupTheme() === 'dark'
+  const dark = startupIsDark()
   /* 开发模式给窗口/任务栏挂仓库内图标;打包后 exe 已内嵌 electron-builder 生成的图标 */
   const devIconPath = join(__dirname, '../../build/icon.png')
   const win = new BrowserWindow({

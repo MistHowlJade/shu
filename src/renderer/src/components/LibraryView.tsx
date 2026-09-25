@@ -1,6 +1,8 @@
 import { Archive, FileArchive, FolderOpen, Plus, Settings, Trash2 } from 'lucide-react'
+import { useState } from 'react'
 import type { CSSProperties } from 'react'
 import { totalWords, useStore } from '../store'
+import BackupModal from './BackupModal'
 
 /* 隐藏式标题栏:书库页没有顶栏,顶部留一条可拖动区域用于移动窗口 */
 const DRAG = { WebkitAppRegion: 'drag', height: 44 } as CSSProperties
@@ -10,11 +12,11 @@ export default function LibraryView() {
   const settings = useStore((s) => s.settings)
   const openBookAt = useStore((s) => s.openBookAt)
   const removeBook = useStore((s) => s.removeBook)
-  const backupBook = useStore((s) => s.backupBook)
   const setCreateBookOpen = useStore((s) => s.setCreateBookOpen)
   const setSettingsOpen = useStore((s) => s.setSettingsOpen)
   const showToast = useStore((s) => s.showToast)
   const updateSettings = useStore((s) => s.updateSettings)
+  const [backupFor, setBackupFor] = useState<{ dir: string; title: string } | null>(null)
 
   async function changeLibraryRoot() {
     const dir = await window.api.dialog.pickFolder()
@@ -170,10 +172,10 @@ export default function LibraryView() {
                     </button>
                     <button
                       className="rounded p-1 t3 opacity-0 transition hover:text-[var(--text)] group-hover:opacity-100"
-                      title="立即备份这本书(完整复制到 _backups 目录)"
+                      title="备份时间线与恢复"
                       onClick={(e) => {
                         e.stopPropagation()
-                        void backupBook(dir)
+                        setBackupFor({ dir, title: book.title })
                       }}
                     >
                       <Archive size={15} />
@@ -212,6 +214,8 @@ export default function LibraryView() {
           </div>
         )}
       </div>
+
+      {backupFor && <BackupModal dir={backupFor.dir} title={backupFor.title} onClose={() => setBackupFor(null)} />}
     </div>
   )
 }

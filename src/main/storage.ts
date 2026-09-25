@@ -503,8 +503,8 @@ export function readPrecedingChapters(bookDir: string, book: Book, chapterId: st
 export const BACKUPS_DIR_NAME = '_backups'
 /** 每本书保留的快照份数,超出时删最旧 */
 const KEEP_SNAPSHOTS = 7
-/** 快照目录名:snap-YYYYMMDD-HHMMSS */
-const SNAP_PATTERN = /^snap-(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})$/
+/** 快照目录名:snap-YYYYMMDD-HHMMSS(同秒内多次快照追加 -毫秒 后缀) */
+const SNAP_PATTERN = /^snap-(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})(?:-(\d{3}))?$/
 /** 每日自动备份的最小间隔 */
 const AUTO_BACKUP_INTERVAL_MS = 24 * 3600 * 1000
 
@@ -538,7 +538,7 @@ function listSnapshots(bookBackups: string): string[] {
 function snapTime(name: string): Date {
   const m = SNAP_PATTERN.exec(name)
   if (!m) return new Date(0)
-  return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6])
+  return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6], m[7] ? +m[7] : 0)
 }
 
 export interface SnapshotResult {
@@ -568,7 +568,7 @@ export function snapshotBook(bookDir: string, libraryRoot: string, opts?: { forc
 
   const d = new Date()
   const p = (n: number, w = 2): string => String(n).padStart(w, '0')
-  const name = `snap-${p(d.getFullYear(), 4)}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`
+  const name = `snap-${p(d.getFullYear(), 4)}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}-${p(d.getMilliseconds(), 3)}`
   const target = path.join(bookBackups, name)
   copyDir(bookDir, target)
 
@@ -584,6 +584,72 @@ export async function openBackupsFolder(libraryRoot: string): Promise<void> {
   const root = backupsRoot(libraryRoot)
   fs.mkdirSync(root, { recursive: true })
   await shell.openPath(root)
+}
+
+/* ---------------- 备份时间线与恢复 ---------------- */
+
+export interface BookSnapshot {
+  /** 快照目录名(snap-YYYYMMDD-HHMMSS 或 snap-import) */
+  name: string
+  /** 快照时间(毫秒):目录名可解析用名字,否则用目录 mtime */
+  time: number
+  /** 快照里的章节数(book.json 可解析时) */
+  chapterCount: number
+}
+
+/** 立即按标准命名拍一份快照(无跳过逻辑),供恢复前兜底等场景使用;毫秒后缀防同秒互相覆盖 */
+function snapshotNow(bookDir: string, bookBackups: string): string {
+  fs.mkdirSync(bookBackups, { recursive: true })
+  const d = new Date()
+  const p = (n: number, w = 2): string => String(n).padStart(w, '0')
+  const target = path.join(
+    bookBackups,
+    `snap-${p(d.getFullYear(), 4)}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}-${p(d.getMilliseconds(), 3)}`
+  )
+  copyDir(bookDir, target)
+  return target
+}
+
+function snapshotsDirFor(libraryRoot: string, bookDir: string): string {
+  return path.join(backupsRoot(libraryRoot), path.basename(bookDir))
+}
+
+/** 列出某本书的备份快照(新→旧),含每个快照的章节数 */
+export function listBookSnapshots(libraryRoot: string, bookDir: string): BookSnapshot[] {
+  const dir = snapshotsDirFor(libraryRoot, bookDir)
+  if (!fs.existsSync(dir)) return []
+  const result: BookSnapshot[] = []
+  for (const name of fs.readdirSync(dir)) {
+    const snapDir = path.join(dir, name)
+    if (!fs.existsSync(path.join(snapDir, 'book.json'))) continue
+    let time: number
+    if (SNAP_PATTERN.test(name)) time = snapTime(name).getTime()
+    else time = fs.statSync(snapDir).mtimeMs
+    const snapBook = readJson<{ chapters?: ChapterMeta[] }>(path.join(snapDir, 'book.json'))
+    result.push({ name, time, chapterCount: Array.isArray(snapBook?.chapters) ? snapBook!.chapters.length : 0 })
+  }
+  return result.sort((a, b) => b.time - a.time)
+}
+
+/**
+ * 把书目录恢复到某个快照时点。
+ * 恢复前先把当前状态拍一份标准快照兜底,因此任何恢复操作本身都可回退。
+ */
+export function restoreSnapshot(libraryRoot: string, bookDir: string, name: string): Book {
+  if (!SNAP_PATTERN.test(name) && name !== 'snap-import') {
+    throw new Error('非法的快照名: ' + name)
+  }
+  const snapDir = path.join(snapshotsDirFor(libraryRoot, bookDir), name)
+  if (!fs.existsSync(path.join(snapDir, 'book.json'))) {
+    throw new Error('快照不存在: ' + name)
+  }
+  /* 恢复前兜底:当前状态先拍一份 */
+  snapshotNow(bookDir, snapshotsDirFor(libraryRoot, bookDir))
+  fs.rmSync(bookDir, { recursive: true, force: true })
+  copyDir(snapDir, bookDir)
+  const book = readBook(bookDir)
+  if (!book) throw new Error('恢复后校验失败,快照可能已损坏: ' + name)
+  return book
 }
 
 /* ---------------- 导出 ---------------- */

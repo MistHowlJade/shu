@@ -37,6 +37,7 @@ import {
   deleteChapter,
   ensureLibraryRoot,
   listBooks,
+  listBookSnapshots,
   listChapterHistory,
   loadSettings,
   openBackupsFolder,
@@ -44,6 +45,7 @@ import {
   readChapter,
   readChapterSnapshot,
   readPrecedingChapters,
+  restoreSnapshot,
   saveBook,
   saveChapter,
   sanitizeDirName,
@@ -203,6 +205,16 @@ export function registerIpcHandlers(): void {
     })
     if (result.canceled || !result.filePaths[0]) return null
     return importBookPackage(result.filePaths[0], ensureLibraryRoot(loadSettings()))
+  })
+
+  /* 备份时间线:列出快照 / 恢复到某时点(恢复前自动兜底快照) */
+  ipcMain.handle('books:snapshots', (_e, dir: string) => {
+    const settings = loadSettings()
+    return listBookSnapshots(ensureLibraryRoot(settings), assertBookDir(dir))
+  })
+  ipcMain.handle('books:restoreSnapshot', (_e, dir: string, name: string) => {
+    const settings = loadSettings()
+    return restoreSnapshot(ensureLibraryRoot(settings), assertBookDir(dir), name)
   })
 
   /* ---- 章节 ---- */

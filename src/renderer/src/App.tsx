@@ -36,6 +36,7 @@ export default function App() {
   const paletteOpen = useStore((s) => s.paletteOpen)
   const historyOpen = useStore((s) => s.historyOpen)
   const theme = useStore((s) => s.settings.theme)
+  const systemDark = useStore((s) => s.systemDark)
   const init = useStore((s) => s.init)
 
   /* 沉浸写作:仅写作页生效(提前算好,下面的悬浮条效果要用) */
@@ -45,7 +46,7 @@ export default function App() {
   /* Windows 隐藏式标题栏:系统悬浮按钮画在所有内容之上,颜色必须随窗口状态同步,
      否则弹窗压暗/沉浸/书库场景下,右上角会出现一块对不上的色斑 */
   useEffect(() => {
-    const dark = theme === 'dark'
+    const dark = theme === 'dark' || (theme === 'system' && systemDark)
     let color: string
     if (modalOpen) color = dark ? '#20242c' : '#b4b4b7'
     else if (view === 'library') color = dark ? '#141820' : '#f9f9fa'
@@ -56,7 +57,7 @@ export default function App() {
     } catch {
       /* 非支持的宿主环境静默跳过 */
     }
-  }, [theme, view, focus, modalOpen])
+  }, [theme, systemDark, view, focus, modalOpen])
 
   /* 沉浸模式悬浮条:鼠标一动就浮现,静止 1.8 秒后自动隐去,绝不压着正文 */
   useEffect(() => {

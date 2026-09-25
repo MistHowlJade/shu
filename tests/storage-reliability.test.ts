@@ -17,9 +17,11 @@ import {
   SCHEMA_VERSION,
   createBook,
   createChapter,
+  listBookSnapshots,
   listChapterHistory,
   loadSettings,
   readBook,
+  restoreSnapshot,
   saveBook,
   saveChapter,
   saveSettings,
@@ -117,5 +119,42 @@ describe('存储可靠层 · 快照与设置', () => {
     s.ai.profiles[0].apiKey = 'sk-roundtrip'
     saveSettings(s)
     expect(loadSettings().ai.profiles[0].apiKey).toBe('sk-roundtrip')
+  })
+})
+
+describe('存储可靠层 · 备份时间线与恢复', () => {
+  beforeEach(() => {
+    state.root = mkdtempSync(join(tmpdir(), 'nv-storage-'))
+  })
+
+  it('快照列表按时间倒序;恢复回到时点且当前状态有兜底快照', () => {
+    const lib = newLib('restore')
+    const { dir, volumeId } = makeBook(lib, '恢复测试')
+
+    const c1 = createChapter(dir, { volumeId, title: '第一章' })
+    saveChapter(dir, { ...c1.chapter, content: '第一章内容' })
+    expect(snapshotBook(dir, lib, { force: true }).skipped).toBe(false)
+
+    /* 第二章写完,此时有两章 */
+    const c2 = createChapter(dir, { volumeId, title: '第二章' })
+    saveChapter(dir, { ...c2.chapter, content: '第二章内容' })
+
+    const list = listBookSnapshots(lib, dir)
+    expect(list.length).toBe(1)
+    expect(list[0].chapterCount).toBe(1)
+
+    /* 恢复到快照:只剩第一章;当前的两章状态进入兜底快照 */
+    const book = restoreSnapshot(lib, dir, list[0].name)
+    expect(book.chapters.length).toBe(1)
+
+    const list2 = listBookSnapshots(lib, dir)
+    expect(list2.length).toBe(2)
+    expect(list2[0].chapterCount).toBe(2)
+  })
+
+  it('非法快照名被拒绝', () => {
+    const lib = newLib('guard')
+    const { dir } = makeBook(lib, '守卫测试')
+    expect(() => restoreSnapshot(lib, dir, '..\\..\\evil')).toThrow(/非法的快照名/)
   })
 })

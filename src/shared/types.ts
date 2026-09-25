@@ -137,7 +137,7 @@ export interface AISettings {
   contextBudgetChars: number
 }
 
-export type Theme = 'light' | 'dark'
+export type Theme = 'light' | 'dark' | 'system'
 
 export interface AppSettings {
   ai: AISettings
