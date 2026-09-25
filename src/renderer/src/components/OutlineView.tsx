@@ -4,15 +4,26 @@ import { useStore } from '../store'
 
 const STATUS_LABEL: Record<string, string> = { todo: '待写', draft: '草稿', done: '完成' }
 
-/** 细进度条:全书/分卷完成率可视化 */
+/** 细进度条:全书/分卷完成率可视化(渐变填充 + 内凹轨道) */
 function ProgressBar({ done, total }: { done: number; total: number }) {
   const pct = total > 0 ? Math.round((done / total) * 100) : 0
   return (
     <div className="flex min-w-0 flex-1 items-center gap-2">
-      <div className="h-1 min-w-0 flex-1 overflow-hidden rounded-full" style={{ background: 'var(--panel-2)' }}>
+      <div
+        className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full"
+        style={{
+          background: 'color-mix(in srgb, var(--text) 7%, var(--bg))',
+          boxShadow: 'inset 0 1px 2px rgba(18, 20, 26, 0.08)'
+        }}
+      >
         <div
           className="h-full rounded-full"
-          style={{ width: `${pct}%`, background: 'var(--accent)', transition: 'width 0.3s ease' }}
+          style={{
+            width: `${pct}%`,
+            background: 'linear-gradient(90deg, color-mix(in srgb, var(--accent) 68%, #fff 32%), var(--accent))',
+            boxShadow: '0 0 8px -2px color-mix(in srgb, var(--accent) 55%, transparent)',
+            transition: 'width 0.4s cubic-bezier(0.32, 0.72, 0, 1)'
+          }}
         />
       </div>
       <span className="shrink-0 text-[11px] t3">
@@ -236,14 +247,10 @@ export default function OutlineView() {
                     return (
                       <button
                         key={meta.id}
-                        className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm transition"
+                        className={`row-item flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm ${
+                          active ? 'active' : ''
+                        }`}
                         style={active ? { background: 'var(--accent-soft)', color: 'var(--accent-ink)' } : undefined}
-                        onMouseEnter={(e) => {
-                          if (!active) e.currentTarget.style.background = 'var(--panel-2)'
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!active) e.currentTarget.style.background = ''
-                        }}
                         onClick={() => void selectChapter(meta.id)}
                       >
                         <span className="shrink-0 text-xs t3">第{index}章</span>

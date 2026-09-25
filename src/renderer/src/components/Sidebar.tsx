@@ -42,8 +42,8 @@ export default function Sidebar({ onCollapse }: { onCollapse?: () => void }) {
   return (
     <>
       <aside
-        className="panel flex w-60 shrink-0 flex-col overflow-hidden"
-        style={{ background: 'var(--panel)' }}
+        className="flex w-60 shrink-0 flex-col overflow-hidden"
+        style={{ borderRight: '1px solid color-mix(in srgb, var(--border) 60%, transparent)' }}
       >
       <div className="flex shrink-0 items-center gap-1.5 px-3 pb-1 pt-3">
         <span className="serif text-[11px] font-semibold tracking-[0.25em] t3">目 录</span>
@@ -69,7 +69,7 @@ export default function Sidebar({ onCollapse }: { onCollapse?: () => void }) {
                   {isCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
                 </button>
                 <input
-                  className="serif min-w-0 flex-1 rounded bg-transparent px-1 py-0.5 text-sm font-semibold outline-none hover:bg-[var(--panel-2)] focus:bg-[var(--panel-2)]"
+                  className="serif row-item min-w-0 flex-1 rounded bg-transparent px-1 py-0.5 text-sm font-semibold outline-none"
                   value={volume.title}
                   onChange={(e) => void updateVolume(volume.id, { title: e.target.value })}
                   title="点击编辑卷名"
@@ -99,20 +99,18 @@ export default function Sidebar({ onCollapse }: { onCollapse?: () => void }) {
                     return (
                       <div
                         key={meta.id}
-                        className={`group relative flex cursor-pointer items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm transition ${
-                          active ? 'font-medium' : ''
+                        className={`row-item group relative flex cursor-pointer items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm ${
+                          active ? 'active font-medium' : ''
                         }`}
                         style={
                           active
-                            ? { background: 'var(--accent-soft)', color: 'var(--accent-ink)' }
+                            ? {
+                                background: 'var(--panel)',
+                                color: 'var(--accent-ink)',
+                                boxShadow: 'var(--inset-light), var(--shadow-card)'
+                              }
                             : undefined
                         }
-                        onMouseEnter={(e) => {
-                          if (!active) e.currentTarget.style.background = 'var(--panel-2)'
-                        }}
-                        onMouseLeave={(e) => {
-                          if (!active) e.currentTarget.style.background = ''
-                        }}
                         onClick={() => void selectChapter(meta.id)}
                         onContextMenu={(e) => {
                           e.preventDefault()
@@ -141,7 +139,7 @@ export default function Sidebar({ onCollapse }: { onCollapse?: () => void }) {
                           /* 行内重命名:回车/失焦提交,Esc 取消 */
                           <input
                             autoFocus
-                            className="serif min-w-0 flex-1 rounded bg-[var(--panel-2)] px-1 text-sm outline-none"
+                            className="serif min-w-0 flex-1 rounded bg-[var(--panel)] px-1 text-sm outline-none"
                             value={renameDraft}
                             onChange={(e) => setRenameDraft(e.target.value)}
                             onClick={(e) => e.stopPropagation()}
@@ -224,7 +222,7 @@ export default function Sidebar({ onCollapse }: { onCollapse?: () => void }) {
             style={{
               left: Math.min(menu.x, window.innerWidth - 160),
               top: Math.min(menu.y, window.innerHeight - 140),
-              boxShadow: 'var(--shadow)'
+              boxShadow: 'var(--shadow-pop)'
             }}
           >
             <button

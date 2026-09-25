@@ -16,21 +16,29 @@ function Column({
 }) {
   return (
     <section className="panel flex min-w-0 flex-1 flex-col overflow-hidden">
-      {/* 卡片头部:标题居左,操作按钮靠右 */}
-      <div className="flex shrink-0 items-center gap-2 px-5 pb-3 pt-4" style={{ borderBottom: '1px solid var(--border)' }}>
-        <Icon size={15} className="accent" />
-        <h2 className="text-base font-semibold">{title}</h2>
+      {/* 卡片头部:主色图标芯片 + 标题居左,操作按钮靠右 */}
+      <div
+        className="flex shrink-0 items-center gap-2.5 px-5 pb-3 pt-4"
+        style={{ borderBottom: '1px solid color-mix(in srgb, var(--border) 60%, transparent)' }}
+      >
+        <span
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
+          style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}
+        >
+          <Icon size={15} />
+        </span>
+        <h2 className="text-[15px] font-semibold tracking-wide">{title}</h2>
         {actions && <div className="ml-auto flex shrink-0 items-center gap-1.5">{actions}</div>}
       </div>
-      <div className="min-h-0 flex-1 overflow-auto p-5">{children}</div>
+      <div className="min-h-0 flex-1 overflow-auto p-4">{children}</div>
     </section>
   )
 }
 
-/** 设定中心:人物 / 物品 / 世界观 三列等宽白卡,卡片间距 20px */
+/** 设定中心:人物 / 物品 / 世界观 三列等宽白卡,卡片间距 16px */
 export default function CodexView() {
   return (
-    <div className="flex min-h-0 flex-1 gap-5 p-4">
+    <div className="flex min-h-0 flex-1 gap-4 p-4">
       <Column title="人物" icon={Users} actions={<CharacterActions />}>
         <CharacterPanel />
       </Column>

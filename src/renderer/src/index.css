@@ -3,52 +3,60 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ================================================================
-   AI 网文工作台 · UI 设计规范 V1.0
-   冷灰现代工具风(Linear/Figma 质感):冷灰底 + 纯白卡片 + 主色点缀
-   层次依靠留白 + 阴影;色彩仅用于重点交互;长期写作低疲劳
-   全文无衬线(Inter 优先,思源黑体兜底);圆角统一 8px
+   AI 网文工作台 · UI 设计规范 V3.1「纸面浮室」
+   在 V3.0 结构(单顶栏 + 抽屉)上做质感升级:
+   · 环境光渐变底 + 细噪点,界面不再死平
+   · 正文是一张浮起的"纸面",侧栏与操作退到暗处
+   · 层叠柔影 + 顶部内高光;主按钮渐变 + 色晕
+   · 浮层(AI 抽屉/弹窗)玻璃化;按钮按压/悬浮有微动效
    ================================================================ */
 
 :root {
   /* 基础色 */
-  --bg: #f7f8fa;                /* 页面背景:极浅冷灰 */
-  --panel: #ffffff;             /* 卡片/面板/输入容器:纯白 */
-  --panel-2: #f2f4f7;           /* 内嵌区/悬浮填充:极浅灰 */
-  --editor: #ffffff;            /* 正文画布:纯白 */
-  --border: #e4e7ec;            /* 分割线 */
-  --border-strong: #d0d5dd;     /* 输入框 hover 边框/强调分隔 */
+  --bg: #f3f3f5;                /* 环境光底:渐变与噪点的载体 */
+  --panel: #ffffff;
+  --panel-2: #f3f3f6;
+  --editor: #ffffff;
+  --border: #e9e9ec;
+  --border-strong: #d8d9de;
+  --hover: #ececef;
   /* 灰阶文本 */
-  --text: #1d2939;              /* 一级正文(标题/主文本) */
-  --t2: #475467;                /* 二级正文 */
-  --t3: #98a2b3;                /* 辅助小字/占位 */
-  --faint: #c6ccd6;             /* 更弱:禁用点/装饰 */
-  /* 主强调色(仅重点交互) */
-  --accent: #9c433c;
-  --accent-hover: #86352f;
-  --accent-soft: rgba(156, 67, 60, 0.08);
-  --accent-ink: #86352f;        /* 软底上的主色文字 */
+  --text: #17181b;
+  --t2: #5c5f66;
+  --t3: #9a9da6;
+  --faint: #c8cad1;
+  /* 主强调色(仅点睛) */
+  --accent: #a8433a;
+  --accent-hover: #923629;
+  --accent-soft: rgba(168, 67, 58, 0.07);
+  --accent-ink: #923629;
   --danger: #d92d20;
   --ok: #12805c;
   --warn: #b54708;
-  /* 阴影 */
-  --shadow: 0 12px 34px -14px rgba(16, 24, 40, 0.25);
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06);
-  --shadow-hover: 0 3px 8px rgba(0, 0, 0, 0.08);
-  --ring: rgba(156, 67, 60, 0.16);
-  --backdrop: rgba(16, 24, 40, 0.3);
-  /* 字体:无衬线,.serif 类名保留但映射为同一无衬线族,避免全量改组件 */
+  /* 阴影:静态纸面给"贴着的"层叠影,浮层给"悬着的"大影 */
+  --shadow-sheet: 0 1px 2px rgba(18, 20, 26, 0.04), 0 12px 32px -16px rgba(18, 20, 26, 0.16);
+  --shadow-card: 0 1px 2px rgba(18, 20, 26, 0.05), 0 6px 20px -12px rgba(18, 20, 26, 0.12);
+  --shadow-hover: 0 2px 4px rgba(18, 20, 26, 0.05), 0 18px 44px -18px rgba(18, 20, 26, 0.22);
+  --shadow-float: -32px 12px 72px -28px rgba(18, 20, 26, 0.32), 0 4px 16px -8px rgba(18, 20, 26, 0.1);
+  --shadow-pop: 0 24px 64px -20px rgba(18, 20, 26, 0.28), 0 4px 16px -8px rgba(18, 20, 26, 0.12);
+  --ring: rgba(168, 67, 58, 0.15);
+  --backdrop: rgba(22, 24, 30, 0.34);
+  /* 内高光:面板/按钮顶缘的一道 1px 亮线,是"质感"的关键 */
+  --inset-light: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  /* 字体:界面用无衬线;手稿/标题用思源宋体(本地打包),衬线类名接管质感 */
   --font-ui: Inter, "Source Han Sans SC", "Noto Sans SC", system-ui, "Microsoft YaHei", "PingFang SC", sans-serif;
-  --font-serif: Inter, "Source Han Sans SC", "Noto Sans SC", system-ui, "Microsoft YaHei", "PingFang SC", sans-serif;
+  --font-serif: "Noto Serif SC", "Source Han Serif SC", "Songti SC", SimSun, serif;
 }
 
 .dark {
-  --bg: #0f1216;
+  --bg: #0c0e12;
   --panel: #171a20;
   --panel-2: #1e222a;
-  --editor: #13161b;
-  --border: #272c35;
+  --editor: #13161c;
+  --border: #262b34;
   --border-strong: #3a4150;
-  --text: #e8ebf0;
+  --hover: #232833;
+  --text: #e9ecf1;
   --t2: #a6adb8;
   --t3: #767e8a;
   --faint: #4a5160;
@@ -59,11 +67,14 @@
   --danger: #e0655c;
   --ok: #74b083;
   --warn: #c69a45;
-  --shadow: 0 12px 34px -14px rgba(0, 0, 0, 0.6);
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.35);
-  --shadow-hover: 0 3px 8px rgba(0, 0, 0, 0.45);
+  --shadow-sheet: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px -16px rgba(0, 0, 0, 0.5);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35), 0 6px 20px -12px rgba(0, 0, 0, 0.45);
+  --shadow-hover: 0 2px 4px rgba(0, 0, 0, 0.4), 0 18px 44px -18px rgba(0, 0, 0, 0.6);
+  --shadow-float: -32px 12px 72px -28px rgba(0, 0, 0, 0.7), 0 4px 16px -8px rgba(0, 0, 0, 0.45);
+  --shadow-pop: 0 24px 64px -20px rgba(0, 0, 0, 0.65), 0 4px 16px -8px rgba(0, 0, 0, 0.4);
   --ring: rgba(201, 102, 94, 0.25);
-  --backdrop: rgba(5, 8, 12, 0.55);
+  --backdrop: rgba(4, 6, 10, 0.58);
+  --inset-light: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 html,
@@ -80,8 +91,32 @@ body {
   transition: background-color 0.25s ease;
 }
 
+/* 环境光:两团极淡的色雾固定在视口上,给界面纵深感 */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(56rem 30rem at 12% -8%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 62%),
+    radial-gradient(48rem 28rem at 92% -12%, rgba(93, 116, 162, 0.07), transparent 60%),
+    linear-gradient(180deg, color-mix(in srgb, var(--panel) 40%, var(--bg)), var(--bg) 42%);
+}
+
+/* 细噪点:压住渐变的"塑料感",幅度极低,只在浅色下可见 */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.028;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
 ::selection {
-  background: var(--accent-soft);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 /* 线性细线条图标:统一 1.5px 线宽(覆盖 lucide 默认 2px) */
@@ -89,7 +124,14 @@ svg {
   stroke-width: 1.5px;
 }
 
-/* 文字衬线类名(历史命名):V1.0 起映射为全局无衬线 */
+/* 键盘可达性:统一的主色外发光焦点环 */
+:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* 手稿与标题:思源宋体(400/700 已随包本地加载) */
 .serif {
   font-family: var(--font-serif);
 }
@@ -100,8 +142,10 @@ svg {
   height: 8px;
 }
 *::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
+  background: color-mix(in srgb, var(--border-strong) 88%, var(--t3));
   border-radius: 4px;
+  background-clip: padding-box;
+  border: 2px solid transparent;
 }
 *::-webkit-scrollbar-thumb:hover {
   background: var(--t3);
@@ -117,31 +161,71 @@ svg {
 .ok { color: var(--ok); }
 .danger { color: var(--danger); }
 
-/* ---------------- 表面:白卡浮于冷灰底 ---------------- */
+/* ---------------- 表面:浮室体系 ----------------
+   .panel:浮在环境光上的纸卡(渐变面 + 顶缘内高光)
+   .editor-sheet:写作纸面,最大的浮起面
+   .glass:浮层玻璃(抽屉/悬浮条) */
 .panel {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: var(--shadow-card);
-  transition: box-shadow 0.15s ease;
+  position: relative;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 96%, var(--text) 4%), var(--panel) 28%);
+  border: 1px solid color-mix(in srgb, var(--border) 80%, var(--border-strong));
+  border-radius: 16px;
+  box-shadow: var(--inset-light), var(--shadow-card);
+  transition: box-shadow 0.25s ease, border-color 0.2s ease, transform 0.25s ease;
+}
+.editor-sheet {
+  background-color: var(--editor);
+  /* 纸面细纹:极低幅度的噪点,让白纸不发"塑料" */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23p)' opacity='0.022'/%3E%3C/svg%3E");
+  border: 1px solid color-mix(in srgb, var(--border) 70%, var(--border-strong));
+  border-radius: 18px;
+  box-shadow: var(--inset-light), var(--shadow-sheet);
+}
+.glass {
+  background: color-mix(in srgb, var(--panel) 78%, transparent);
+  backdrop-filter: blur(22px) saturate(1.5);
+  -webkit-backdrop-filter: blur(22px) saturate(1.5);
 }
 .inset {
-  background: var(--panel-2);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  background: color-mix(in srgb, var(--panel-2) 88%, var(--bg));
+  border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+  border-radius: 12px;
+  box-shadow: inset 0 1px 2px rgba(18, 20, 26, 0.03);
 }
 
-/* ---------------- 输入控件:默认无边框,hover 细灰边,focus 主色外发光 ---------------- */
+/* 软行:列表里的可展开条目,比嵌套白卡轻一档 */
+.soft-row {
+  background: color-mix(in srgb, var(--panel-2) 62%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 75%, transparent);
+  border-radius: 12px;
+  transition: border-color 0.15s, background-color 0.15s, box-shadow 0.2s;
+}
+.soft-row:hover {
+  background: color-mix(in srgb, var(--panel) 75%, var(--panel-2));
+  border-color: var(--border-strong);
+  box-shadow: var(--inset-light);
+}
+
+/* 列表行:统一的 hover 底色与过渡(替代散落的 inline 处理) */
+.row-item {
+  transition: background-color 0.15s ease, box-shadow 0.2s ease, color 0.15s ease;
+}
+.row-item:not(.active):hover {
+  background: color-mix(in srgb, var(--panel) 75%, transparent);
+}
+
+/* ---------------- 输入控件:填充式,focus 主色外发光 ---------------- */
 .field-input {
   width: 100%;
-  border-radius: 8px;
-  border: 1px solid transparent;
-  background: var(--panel);
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  background: color-mix(in srgb, var(--panel-2) 92%, var(--panel));
   color: var(--text);
-  padding: 12px 14px;
+  padding: 11px 13px;
   font-size: 0.875rem;
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  box-shadow: inset 0 1px 2px rgba(18, 20, 26, 0.02);
+  transition: border-color 0.15s, box-shadow 0.15s, background-color 0.15s;
 }
 .field-input::placeholder {
   color: var(--t3);
@@ -150,27 +234,22 @@ svg {
   border-color: var(--border-strong);
 }
 .field-input:focus {
+  background: var(--panel);
   border-color: color-mix(in srgb, var(--accent) 55%, var(--border-strong));
   box-shadow: 0 0 0 3px var(--ring);
-}
-/* 内嵌灰底上的输入框:白底自然浮出 */
-.inset .field-input,
-.panel-2-bg .field-input {
-  background: var(--panel);
 }
 
 .field-label {
   display: block;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.375rem;
   font-size: 0.75rem;
-  font-weight: 500;
+  font-weight: 550;
   color: var(--t2);
   letter-spacing: 0.02em;
 }
 
-/* ---------------- 按钮:统一尺寸体系 ----------------
-   主按钮/次按钮 高36px·水平16px;图标小按钮(ghost基础) 高32px;
-   P1 主按钮(一屏唯一) > P2 主色描边 > 幽灵 > ghost */
+/* ---------------- 按钮:统一尺寸体系 + 微动效 ----------------
+   主按钮/次按钮 高36px·水平16px;图标小按钮(ghost基础) 高32px */
 .btn,
 .btn-primary,
 .btn-secondary,
@@ -183,40 +262,52 @@ svg {
   gap: 0.375rem;
   height: 32px;
   padding: 0 12px;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 0.875rem;
-  font-weight: 500;
-  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+  font-weight: 520;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s, box-shadow 0.2s, transform 0.12s;
   cursor: pointer;
+  user-select: none;
 }
 .btn-primary,
 .btn-outline {
   height: 36px;
   padding: 0 16px;
 }
+.btn:active:not(:disabled),
+.btn-primary:active:not(:disabled),
+.btn-secondary:active:not(:disabled),
+.btn-ghost:active:not(:disabled),
+.btn-outline:active:not(:disabled) {
+  transform: scale(0.97);
+}
 .btn:disabled,
 .btn-primary:disabled,
 .btn-secondary:disabled,
 .btn-ghost:disabled,
-.btn-outline:disabled,
-.btn-accent-soft:disabled {
+.btn-outline:disabled {
   cursor: not-allowed;
   opacity: 0.45;
 }
 
+/* P1 主按钮:主色渐变 + 顶缘高光 + 同色晕 */
 .btn-primary {
-  background: var(--accent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 92%, #fff 8%), var(--accent) 55%, var(--accent-hover));
   color: #ffffff;
+  border: none;
+  box-shadow: var(--inset-light), 0 1px 2px rgba(18, 20, 26, 0.18), 0 6px 18px -6px color-mix(in srgb, var(--accent) 50%, transparent);
 }
 .btn-primary:hover:not(:disabled) {
-  background: var(--accent-hover);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent-hover) 92%, #fff 8%), var(--accent-hover) 55%, var(--accent-hover));
+  box-shadow: var(--inset-light), 0 2px 4px rgba(18, 20, 26, 0.18), 0 10px 26px -8px color-mix(in srgb, var(--accent) 60%, transparent);
 }
 
-/* P2 次级强调:主色细描边,色彩仅作点缀 */
+/* P2 次级强调:主色细描边 */
 .btn-secondary {
   border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--border-strong));
   background: var(--panel);
   color: var(--accent-ink);
+  box-shadow: var(--inset-light);
 }
 .btn-secondary:hover:not(:disabled) {
   border-color: var(--accent);
@@ -228,114 +319,108 @@ svg {
   background: transparent;
 }
 .btn-ghost:hover:not(:disabled) {
-  background: var(--panel-2);
+  background: color-mix(in srgb, var(--panel) 72%, var(--border) 28%);
   color: var(--text);
+  box-shadow: var(--inset-light);
 }
 
-/* 幽灵按钮(次按钮):白底灰字 + 细灰边;hover 填充极浅灰 */
+/* 幽灵按钮(次按钮):浅填充 */
 .btn-outline {
-  border: 1px solid var(--border);
-  background: var(--panel);
+  border: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+  background: color-mix(in srgb, var(--panel) 78%, var(--panel-2));
   color: var(--t2);
+  box-shadow: var(--inset-light);
 }
 .btn-outline:hover:not(:disabled) {
-  background: var(--panel-2);
+  background: var(--panel);
   color: var(--text);
+  box-shadow: var(--inset-light), var(--shadow-card);
 }
 
-/* 激活态(如已展开的抽屉/选中的分段项):主色软底 */
+/* 激活态:主色软底 */
 .btn-outline.active,
 .btn-secondary.active {
   background: var(--accent-soft);
   color: var(--accent-ink);
-  border-color: transparent;
+  border-color: color-mix(in srgb, var(--accent) 26%, transparent);
+  box-shadow: none;
 }
 
-/* ---------------- 左侧导航栏 ----------------
-   固定窄宽度 48px 纯图标;hover 展开至 180px 露出文字;白底 + 基础阴影 */
-.rail {
-  width: 48px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 4px;
-  padding: 10px 0 12px;
-  background: var(--panel);
-  border-right: 1px solid var(--border);
-  box-shadow: var(--shadow-card);
-  user-select: none;
-  overflow: hidden;
-  transition: width 0.2s ease;
-}
-.rail:hover {
-  width: 180px;
-}
-/* 文字标签:收起时隐藏,展开淡入 */
-.rail .rail-label {
-  opacity: 0;
-  white-space: nowrap;
-  transition: opacity 0.15s ease;
-}
-.rail:hover .rail-label {
-  opacity: 1;
-}
-
-.rail-btn {
-  position: relative;
-  width: auto;
-  height: 34px;
-  margin: 0 7px;
-  padding: 0 10px;
-  border-radius: 8px;
-  display: flex;
+/* ---------------- 分段控件:玻璃轨道 + 活动白胶囊 ---------------- */
+.seg {
+  display: inline-flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: 10px;
-  flex-shrink: 0;
-  color: var(--t3);
-  transition: background-color 0.15s, color 0.15s;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--text) 6%, var(--bg));
+  box-shadow: inset 0 1px 2px rgba(18, 20, 26, 0.06), inset 0 -1px 0 rgba(255, 255, 255, 0.25);
 }
-.rail-btn svg {
-  flex-shrink: 0;
-  transition: transform 0.15s ease;
+.dark .editor-sheet {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23p)' fill='%23ffffff' opacity='0.018'/%3E%3C/svg%3E");
 }
-.rail-btn:hover svg {
-  transform: scale(1.05);
+
+.dark .seg {
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
 }
-.rail-btn:hover {
-  background: var(--panel-2);
+.seg-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 14px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--t2);
+  background: transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, background-color 0.15s, box-shadow 0.2s;
+}
+.seg-item:hover:not(.active) {
   color: var(--text);
 }
-.rail-btn.active {
-  background: var(--accent-soft);
-  color: var(--accent);
+.seg-item.active {
+  background: var(--panel);
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: var(--inset-light), 0 1px 3px rgba(18, 20, 26, 0.12), 0 0 0 0.5px rgba(18, 20, 26, 0.05);
 }
-/* 激活态:导航最左侧 2px 主色细竖线 */
-.rail-btn.active::before {
-  content: "";
-  position: absolute;
-  left: -7px;
-  top: 9px;
-  bottom: 9px;
-  width: 2px;
-  border-radius: 1px;
-  background: var(--accent);
-}
-.rail-btn.labeled .rail-label {
-  font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
+.dark .seg-item.active {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45), 0 0 0 0.5px rgba(255, 255, 255, 0.07);
 }
 
-/* 未开书时置灰:禁用态连 hover 底色都不该亮,避免看起来像能点 */
-.rail-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+/* ---------------- AI 抽屉:玻璃浮层,从顶栏下方滑出(不遮系统按钮区) ---------------- */
+.drawer {
+  position: fixed;
+  top: 48px;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  width: 384px;
+  max-width: 92vw;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  backdrop-filter: blur(28px) saturate(1.6);
+  -webkit-backdrop-filter: blur(28px) saturate(1.6);
+  border-left: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  border-radius: 18px 0 0 18px;
+  box-shadow: var(--shadow-float);
+  animation: drawer-in 0.32s cubic-bezier(0.32, 0.72, 0, 1);
 }
-.rail-btn:disabled:hover {
-  background: transparent;
-  color: var(--t3);
+@keyframes drawer-in {
+  from {
+    transform: translateX(56px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
 }
 
 /* ---------------- 命令面板 ---------------- */
@@ -356,7 +441,7 @@ svg {
   gap: 10px;
   width: 100%;
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 0.875rem;
   color: var(--t2);
   cursor: pointer;
@@ -376,8 +461,9 @@ svg {
   line-height: 1;
   padding: 3px 5px;
   border-radius: 5px;
-  border: 1px solid var(--border);
-  background: var(--panel-2);
+  border: 1px solid color-mix(in srgb, var(--border) 90%, var(--border-strong));
+  background: color-mix(in srgb, var(--panel-2) 90%, var(--panel));
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--border-strong) 55%, transparent);
   color: var(--t3);
   white-space: nowrap;
 }
@@ -385,7 +471,7 @@ svg {
 /* ---------------- 沉浸模式 ---------------- */
 /* 正文的纸面宽度:一行约 34~38 个汉字,最耐读 */
 .measure {
-  max-width: 42rem;
+  max-width: 44rem;
   margin-inline: auto;
 }
 
@@ -399,7 +485,7 @@ svg {
   justify-content: center;
   padding: 1rem;
   background: var(--backdrop);
-  backdrop-filter: blur(3px);
+  backdrop-filter: blur(6px) saturate(1.2);
   animation: modal-fade 0.2s ease;
 }
 @keyframes modal-fade {
@@ -407,10 +493,12 @@ svg {
   to { opacity: 1; }
 }
 .modal-card {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: var(--shadow);
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  backdrop-filter: blur(24px) saturate(1.5);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  border: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+  border-radius: 18px;
+  box-shadow: var(--shadow-pop);
 }
 
 /* ---------------- 动效 ---------------- */
@@ -419,19 +507,21 @@ svg {
   to { opacity: 1; transform: translateY(0); }
 }
 .fade-up {
-  animation: fade-up 0.18s ease-out;
+  animation: fade-up 0.2s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-/* 页面切换淡入(挂在工作区容器上,按 mode 重新挂载触发) */
+/* 页面切换:淡入 + 轻微上移(挂在工作区容器上,按 mode 重新挂载触发) */
 @keyframes view-fade {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: none; }
 }
 .view-fade {
-  animation: view-fade 0.2s ease;
+  animation: view-fade 0.24s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-/* 卡片 hover:阴影切换为悬浮增强阴影,柔和过渡,无位移 */
+/* 卡片 hover:柔影加深并轻微上浮 */
 .panel.card-lift:hover {
-  box-shadow: var(--shadow-hover);
+  box-shadow: var(--inset-light), var(--shadow-hover);
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
 }

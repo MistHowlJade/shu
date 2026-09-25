@@ -46,6 +46,8 @@ export function aiSlice({ set, get }: SliceCtx): AISlice {
       if (get().dirty) await get().saveNow()
       const requestId = uid()
       set({ aiRunning: true, aiRequest: { id: requestId, kind }, aiOutput: '', aiError: null, aiLastKind: kind })
+      /* 抽屉关着时自动弹出,让流式输出始终可见;沉浸模式不打断(悬浮进度条兜底) */
+      if (!get().aiOpen && !get().focusMode) get().setAiOpen(true)
 
       /* 订阅流式增量 */
       const unsubscribe = window.api.ai.onDelta((payload) => {
@@ -187,6 +189,7 @@ export function aiSlice({ set, get }: SliceCtx): AISlice {
         return
       }
       set({ autoWrite: { running: true, total: targets.length, done: 0, currentTitle: targets[0].title, stop: false } })
+      if (!get().aiOpen && !get().focusMode) get().setAiOpen(true)
       let done = 0
       for (const meta of targets) {
         if (get().autoWrite?.stop) break

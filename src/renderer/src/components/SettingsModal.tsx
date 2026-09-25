@@ -73,6 +73,21 @@ export default function SettingsModal() {
     setTestResult(null)
   }
 
+  /* 一键清理:历史批量导入了几十条模型配置时,一键只保留当前启用的这条 */
+  function keepOnlyActive() {
+    const removing = draft.ai.profiles.length - 1
+    if (removing <= 0) return
+    const keep = profile.name || profile.model || '未命名'
+    if (!window.confirm(`将删除其余 ${removing} 个模型配置(连同各自保存的 API Key),只保留「${keep}」。此操作在保存后生效,确定?`)) {
+      return
+    }
+    setDraft((d) => ({
+      ...d,
+      ai: { ...d.ai, profiles: d.ai.profiles.filter((p) => p.id === d.ai.activeProfileId) }
+    }))
+    setTestResult(null)
+  }
+
   async function pickFolder() {
     const dir = await window.api.dialog.pickFolder()
     if (dir) setDraft((d) => ({ ...d, libraryRoot: dir }))
@@ -117,35 +132,47 @@ export default function SettingsModal() {
           <section>
             <h3 className="serif mb-2 text-sm font-semibold tracking-wider">AI 模型配置</h3>
 
-            {/* 配置列表:点谁用谁 */}
+            {/* 配置列表:点谁用谁;数量多时限高滚动,一键只留当前 */}
             <div className="mb-3 flex flex-wrap items-center gap-1.5">
-              {draft.ai.profiles.map((p) => (
-                <span
-                  key={p.id}
-                  className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-medium transition ${
-                    p.id === draft.ai.activeProfileId
-                      ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-ink)]'
-                      : 'border-[var(--border-strong)] bg-[var(--panel)] text-[var(--t2)] hover:bg-[var(--panel-2)]'
-                  }`}
-                >
-                  <button onClick={() => patchAi({ activeProfileId: p.id })} title="点击启用此配置">
-                    {p.name || p.model || '未命名'}
-                  </button>
-                  {draft.ai.profiles.length > 1 && (
-                    <button
-                      className="t3 hover:text-[var(--danger)]"
-                      title="删除此配置"
-                      onClick={() => removeProfile(p.id)}
-                    >
-                      <Trash2 size={11} />
+              <div className="flex max-h-36 flex-wrap items-center gap-1.5 overflow-y-auto">
+                {draft.ai.profiles.map((p) => (
+                  <span
+                    key={p.id}
+                    className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-medium transition ${
+                      p.id === draft.ai.activeProfileId
+                        ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent-ink)]'
+                        : 'border-[var(--border-strong)] bg-[var(--panel)] text-[var(--t2)] hover:bg-[var(--panel-2)]'
+                    }`}
+                  >
+                    <button onClick={() => patchAi({ activeProfileId: p.id })} title="点击启用此配置">
+                      {p.name || p.model || '未命名'}
                     </button>
-                  )}
-                </span>
-              ))}
+                    {draft.ai.profiles.length > 1 && (
+                      <button
+                        className="t3 hover:text-[var(--danger)]"
+                        title="删除此配置"
+                        onClick={() => removeProfile(p.id)}
+                      >
+                        <Trash2 size={11} />
+                      </button>
+                    )}
+                  </span>
+                ))}
+              </div>
               <button className="btn-ghost !px-2 !py-1 !text-xs" title="新增一个自定义配置" onClick={addProfile}>
                 <Plus size={13} />
                 新增
               </button>
+              {draft.ai.profiles.length > 3 && (
+                <button
+                  className="btn-ghost !px-2 !py-1 !text-xs hover:!text-[var(--danger)]"
+                  title="删除其余全部配置(连同各自保存的 API Key),只保留当前启用的这条"
+                  onClick={keepOnlyActive}
+                >
+                  <Trash2 size={12} />
+                  只留当前({draft.ai.profiles.length - 1})
+                </button>
+              )}
             </div>
 
             {/* 模板快填 */}

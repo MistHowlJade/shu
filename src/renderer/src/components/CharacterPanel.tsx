@@ -19,7 +19,7 @@ function CharacterCard({ character }: { character: Character }) {
   }
 
   return (
-    <div className="panel card-lift mb-2 overflow-hidden">
+    <div className="soft-row mb-2 overflow-hidden">
       <div className="flex items-center gap-1 px-2 py-1.5">
         <button className="rounded p-0.5 t3" onClick={() => setExpanded(!expanded)}>
           {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
@@ -132,7 +132,7 @@ export function CharacterActions() {
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="panel absolute right-0 top-9 z-20 w-64 space-y-2 p-2.5" style={{ boxShadow: 'var(--shadow)' }}>
+          <div className="panel absolute right-0 top-9 z-20 w-64 space-y-2 p-2.5" style={{ boxShadow: 'var(--shadow-pop)' }}>
             <input
               className="field-input !py-1.5 !text-xs"
               value={hint}

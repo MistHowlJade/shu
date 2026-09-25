@@ -5,8 +5,8 @@ import Sidebar from './Sidebar'
 import Editor from './Editor'
 
 /**
- * 写作页:章节栏 + 正文画布。
- * AI 助手面板已上移为全局右栏(见 App),跨页面共享、可收起;沉浸模式下只留正文。
+ * 写作页:章节目录融入环境光底,正文是一张浮起的"纸面"。
+ * AI 助手是全局右侧抽屉(见 App);沉浸模式下只留纸面。
  */
 export default function WriteView() {
   const focusMode = useStore((s) => s.focusMode)
@@ -22,22 +22,23 @@ export default function WriteView() {
   if (focusMode) return <Editor />
 
   return (
-    <div className="flex min-h-0 flex-1 gap-3 p-3">
+    <div className="flex min-h-0 flex-1">
       {sideOpen && <Sidebar onCollapse={toggleSide} />}
 
-      {/* 编辑器卡片:页面最大容器,视觉核心 */}
-      <div className="panel relative flex min-w-0 flex-1 flex-col overflow-hidden">
-        {!sideOpen && (
-          <button
-            className="btn-ghost absolute left-2 top-2 z-10 !px-2"
-            title="展开章节栏"
-            onClick={toggleSide}
-          >
-            <PanelLeftOpen size={16} />
-          </button>
-        )}
-        {/* 章节栏折叠开关在 Sidebar 头部 */}
-        <Editor />
+      {/* 环境光留边,纸面浮起 */}
+      <div className="flex min-w-0 flex-1 flex-col p-3 pl-4">
+        <div className="editor-sheet relative flex min-h-0 flex-1 flex-col overflow-hidden">
+          {!sideOpen && (
+            <button
+              className="btn-ghost absolute left-2 top-2 z-10 !px-2"
+              title="展开章节目录"
+              onClick={toggleSide}
+            >
+              <PanelLeftOpen size={16} />
+            </button>
+          )}
+          <Editor />
+        </div>
       </div>
     </div>
   )

@@ -29,6 +29,28 @@ interface Cmd {
   run: () => void
 }
 
+/** 把 label 中命中的查询片段染成主色,一眼看清匹配了哪里 */
+function Highlight({ text, query }: { text: string; query: string }) {
+  const q = query.trim().toLowerCase()
+  if (!q) return <>{text}</>
+  const lower = text.toLowerCase()
+  const parts: React.ReactNode[] = []
+  let cursor = 0
+  let hit = lower.indexOf(q)
+  while (hit !== -1) {
+    if (hit > cursor) parts.push(text.slice(cursor, hit))
+    parts.push(
+      <mark key={hit} className="bg-transparent font-semibold" style={{ color: 'var(--accent)' }}>
+        {text.slice(hit, hit + q.length)}
+      </mark>
+    )
+    cursor = hit + q.length
+    hit = lower.indexOf(q, cursor)
+  }
+  parts.push(text.slice(cursor))
+  return <>{parts}</>
+}
+
 /**
  * Ctrl+K 命令面板:键盘优先直达所有页面与常用操作。
  * 可用项随当前状态(是否打开书/是否有章节)动态生成。
@@ -145,6 +167,14 @@ export default function CommandPalette() {
     /* 全局 */
     if (s.view === 'workspace') {
       list.push({ id: 'save', label: '保存当前章节', group: '全局', kbd: 'Ctrl+S', icon: Save, run: () => void s.saveNow() })
+      list.push({
+        id: 'ai-drawer',
+        label: s.aiOpen ? '收起 AI 助手抽屉' : '展开 AI 助手抽屉',
+        group: '全局',
+        kbd: 'Ctrl+I',
+        icon: Wand2,
+        run: () => s.setAiOpen(!s.aiOpen)
+      })
       list.push({ id: 'export', label: '导出全书 TXT', group: '全局', icon: Download, run: () => void s.exportTxt() })
     }
     list.push({ id: 'settings', label: '打开设置', group: '全局', icon: Settings, run: () => s.setSettingsOpen(true) })
@@ -268,7 +298,9 @@ export default function CommandPalette() {
                 )}
                 <div className="palette-item" data-active={i === active} onMouseEnter={() => setActive(i)} onClick={() => exec(cmd)}>
                   <Icon size={15} />
-                  <span className="truncate">{cmd.label}</span>
+                  <span className="truncate">
+                    <Highlight text={cmd.label} query={query} />
+                  </span>
                   {cmd.kbd && <span className="kbd">{cmd.kbd}</span>}
                 </div>
               </div>

@@ -5,6 +5,15 @@ import { loadInspire, type SliceCtx, type WorkspaceMode } from './types'
 
 const initialSettings: AppSettings = structuredClone(DEFAULT_SETTINGS)
 
+/** 读取抽屉展开记忆;localStorage 不可用(测试环境/隐私模式)时静默回退 */
+function storedDrawerOpen(): boolean {
+  try {
+    return localStorage.getItem('aiDrawerOpen') === '1'
+  } catch {
+    return false
+  }
+}
+
 /** 把章节元数据改动同步进当前 book 并持久化(章节/设定/AI/扫书各切片共用) */
 export async function persistBook(ctx: SliceCtx, mutate?: (draft: Book) => void): Promise<void> {
   const { bookDir, book } = ctx.get()
@@ -28,6 +37,8 @@ export interface BaseSlice {
   createBookOpen: boolean
   /** Ctrl+K 命令面板浮层 */
   paletteOpen: boolean
+  /** AI 助手抽屉:按需从右侧滑出,生成时自动弹出;展开状态记忆到 localStorage */
+  aiOpen: boolean
   /** 沉浸写作模式:隐藏导航栏/侧栏/AI 面板,只留正文 */
   focusMode: boolean
   toast: { id: number; kind: 'info' | 'error'; message: string } | null
@@ -47,6 +58,7 @@ export interface BaseSlice {
   setSettingsOpen: (open: boolean) => void
   setCreateBookOpen: (open: boolean) => void
   setPaletteOpen: (open: boolean) => void
+  setAiOpen: (open: boolean) => void
   setFocusMode: (on: boolean) => void
   updateSettings: (patch: Partial<AppSettings>) => Promise<void>
   exportTxt: () => Promise<void>
@@ -64,6 +76,7 @@ export function baseSlice({ set, get }: SliceCtx): BaseSlice {
     settingsOpen: false,
     createBookOpen: false,
     paletteOpen: false,
+    aiOpen: storedDrawerOpen(),
     focusMode: false,
     toast: null,
 
@@ -171,6 +184,14 @@ export function baseSlice({ set, get }: SliceCtx): BaseSlice {
     setSettingsOpen: (open) => set({ settingsOpen: open }),
     setCreateBookOpen: (open) => set({ createBookOpen: open }),
     setPaletteOpen: (open) => set({ paletteOpen: open }),
+    setAiOpen: (open) => {
+      set({ aiOpen: open })
+      try {
+        localStorage.setItem('aiDrawerOpen', open ? '1' : '0')
+      } catch {
+        /* 写不进就只保留内存态 */
+      }
+    },
     setFocusMode: (on) => set({ focusMode: on }),
 
     updateSettings: async (patch) => {

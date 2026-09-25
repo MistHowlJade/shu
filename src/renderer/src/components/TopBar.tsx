@@ -1,25 +1,37 @@
-import { Maximize2, Search, Settings } from 'lucide-react'
+import { ArrowLeft, Maximize2, Search, Settings, Sparkles, Sun, Moon, Loader2 } from 'lucide-react'
+import type { CSSProperties } from 'react'
 import { totalWords, useStore } from '../store'
 import type { WorkspaceMode } from '../store'
 
-const MODES: { id: WorkspaceMode; label: string }[] = [
-  { id: 'write', label: '写作' },
-  { id: 'codex', label: '设定中心' },
-  { id: 'outline', label: '大纲规划' },
-  { id: 'import', label: '拆书扫书' }
+/* Electron 里顶栏整条可拖动(隐藏式标题栏);交互元素逐个恢复可点 */
+const DRAG = { WebkitAppRegion: 'drag' } as CSSProperties
+const NO_DRAG = { WebkitAppRegion: 'no-drag' } as CSSProperties
+const IS_ELECTRON = /Electron/i.test(navigator.userAgent)
+const IS_MAC = /Mac/i.test(navigator.userAgent)
+
+const MODES: { id: WorkspaceMode; label: string; kbd: string }[] = [
+  { id: 'write', label: '写作', kbd: 'Ctrl+1' },
+  { id: 'codex', label: '设定', kbd: 'Ctrl+2' },
+  { id: 'outline', label: '大纲', kbd: 'Ctrl+3' },
+  { id: 'import', label: '拆书', kbd: 'Ctrl+4' }
 ]
 
 /**
- * 书籍上下文条:书名(宋体)+ 当前模式 + 沉浸模式/命令面板入口。
- * 沉浸写作模式下由 App 隐藏。
+ * 全局顶栏:返回书库 + 书名 · 分段式模式切换 · AI 抽屉 / 命令面板 / 主题 / 设置。
+ * 原 Rail 与 StatusBar 已并入这一条,沉浸模式下由 App 隐藏。
  */
 export default function TopBar() {
   const book = useStore((s) => s.book)
   const workspaceMode = useStore((s) => s.workspaceMode)
   const setWorkspaceMode = useStore((s) => s.setWorkspaceMode)
-  const setFocusMode = useStore((s) => s.setFocusMode)
+  const backToLibrary = useStore((s) => s.backToLibrary)
   const setPaletteOpen = useStore((s) => s.setPaletteOpen)
   const setSettingsOpen = useStore((s) => s.setSettingsOpen)
+  const aiOpen = useStore((s) => s.aiOpen)
+  const setAiOpen = useStore((s) => s.setAiOpen)
+  const aiRunning = useStore((s) => s.aiRunning)
+  const theme = useStore((s) => s.settings.theme)
+  const updateSettings = useStore((s) => s.updateSettings)
 
   if (!book) return null
 
@@ -27,61 +39,79 @@ export default function TopBar() {
 
   return (
     <header
-      className="flex h-10 shrink-0 items-center gap-3 px-4"
-      style={{ background: 'var(--panel)', borderBottom: '1px solid var(--border)' }}
+      className="relative z-10 flex h-12 shrink-0 items-center gap-2 px-3"
+      style={{
+        WebkitAppRegion: 'drag',
+        background: 'var(--panel)',
+        borderBottom: '1px solid color-mix(in srgb, var(--border) 55%, transparent)'
+      } as CSSProperties}
     >
-      <h1 className="serif min-w-0 truncate text-[15px] font-semibold" title={book.title}>
-        《{book.title}》
+      {/* 左:返回书库 + 书名 + 进度(macOS 红绿灯让位) */}
+      <button
+        className="btn-ghost !h-8 !w-8 !px-0"
+        style={{ ...NO_DRAG, marginLeft: IS_MAC ? 64 : 0 } as CSSProperties}
+        title="返回书库"
+        onClick={() => void backToLibrary()}
+      >
+        <ArrowLeft size={16} />
+      </button>
+      <h1 className="serif max-w-[12rem] min-w-0 truncate text-[15px] font-semibold tracking-wide" title={book.title}>
+        {book.title}
       </h1>
-      <span className="hidden shrink-0 text-xs t3 lg:inline">
-        {book.genre} · 已完成 {doneCount}/{book.chapters.length} 章 · {totalWords(book).toLocaleString('zh-CN')} 字
+      <span className="hidden shrink-0 text-xs t3 xl:inline">
+        {doneCount}/{book.chapters.length} 章 · {totalWords(book).toLocaleString('zh-CN')} 字
       </span>
 
-      {/* 页面标签:主色文字 + 底部细下划线,与左侧导航联动同步高亮 */}
-      <div className="mx-auto flex shrink-0 items-center gap-1 self-stretch">
-        {MODES.map(({ id, label }) => {
-          const active = workspaceMode === id
-          return (
-            <button
-              key={id}
-              className={`relative flex h-full items-center px-3 text-[13px] transition ${
-                active ? 'font-semibold' : 't3 hover:text-[var(--text)]'
-              }`}
-              style={active ? { color: 'var(--accent)' } : undefined}
-              onClick={() => setWorkspaceMode(id)}
-            >
-              {label}
-              <span
-                className="absolute inset-x-2.5 bottom-0 h-0.5 rounded-full"
-                style={{ background: active ? 'var(--accent)' : 'transparent' }}
-              />
-            </button>
-          )
-        })}
-      </div>
+      {/* 中:分段式模式切换(居中,替代原 Rail + 顶栏双份导航) */}
+      <nav className="seg absolute left-1/2 -translate-x-1/2" style={NO_DRAG}>
+        {MODES.map(({ id, label, kbd }) => (
+          <button
+            key={id}
+            className={`seg-item ${workspaceMode === id ? 'active' : ''}`}
+            title={`${label} (${kbd})`}
+            onClick={() => setWorkspaceMode(id)}
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
 
-      <button
-        className="btn-ghost !h-8 !px-2 !text-xs"
-        title="命令面板 (Ctrl+K)"
-        onClick={() => setPaletteOpen(true)}
+      {/* 右:沉浸写作(仅写作页)/ AI 抽屉 / 命令面板 / 主题 / 设置;Electron 下给系统按钮让位 */}
+      <div
+        className="ml-auto flex shrink-0 items-center gap-1"
+        style={{ ...NO_DRAG, marginRight: IS_ELECTRON && !IS_MAC ? 132 : 0 } as CSSProperties}
       >
-        <Search size={14} />
-        <span className="kbd hidden sm:inline-flex">Ctrl+K</span>
-      </button>
-      {/* 沉浸写作只在写作页有意义,其他模式不放死按钮 */}
-      {workspaceMode === 'write' && (
+        {workspaceMode === 'write' && (
+          <button
+            className="btn-ghost !h-8 !w-8 !px-0"
+            title="沉浸写作:隐藏所有面板,只留正文(Esc 退出)"
+            onClick={() => useStore.getState().setFocusMode(true)}
+          >
+            <Maximize2 size={15} />
+          </button>
+        )}
         <button
-          className="btn-outline !h-8 !px-2.5 !text-xs"
-          title="隐藏所有面板,只留正文(按 Esc 或 F11 退出)"
-          onClick={() => setFocusMode(true)}
+          className={`btn-ghost !h-8 !w-8 !px-0 ${aiRunning ? 'accent' : ''}`}
+          title={aiOpen ? '收起 AI 助手 (Ctrl+I)' : 'AI 助手 (Ctrl+I)'}
+          onClick={() => setAiOpen(!aiOpen)}
         >
-          <Maximize2 size={13} />
-          沉浸写作
+          {aiRunning ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
         </button>
-      )}
-      <button className="btn-ghost !h-8 !w-8 !px-0" title="设置" onClick={() => setSettingsOpen(true)}>
-        <Settings size={15} />
-      </button>
+        <button className="btn-ghost !h-8 !px-2" title="命令面板 (Ctrl+K)" onClick={() => setPaletteOpen(true)}>
+          <Search size={14} />
+          <span className="kbd hidden sm:inline-flex">Ctrl K</span>
+        </button>
+        <button
+          className="btn-ghost !h-8 !w-8 !px-0"
+          title={theme === 'dark' ? '切到浅色' : '切到深色'}
+          onClick={() => void updateSettings({ theme: theme === 'dark' ? 'light' : 'dark' })}
+        >
+          {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+        </button>
+        <button className="btn-ghost !h-8 !w-8 !px-0" title="设置" onClick={() => setSettingsOpen(true)}>
+          <Settings size={15} />
+        </button>
+      </div>
     </header>
   )
 }

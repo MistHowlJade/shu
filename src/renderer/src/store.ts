@@ -40,3 +40,8 @@ export function totalWords(book: Book | null): number {
   if (!book) return 0
   return book.chapters.reduce((sum, c) => sum + c.wordCount, 0)
 }
+
+/* 开发模式把 store 挂到 window,供自动化验证(如扫书结果与原文核对)驱动;打包版不含此句 */
+if (process.env.NODE_ENV !== 'production' && typeof window !== 'undefined') {
+  ;(window as unknown as { __store: typeof useStore }).__store = useStore
+}

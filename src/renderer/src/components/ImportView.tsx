@@ -50,9 +50,14 @@ export default function ImportView() {
     <div className="flex min-h-0 flex-1 gap-5 p-4">
       {/* 左:来源与控制(独立白卡) */}
       <div className="panel flex w-[30rem] shrink-0 flex-col overflow-auto p-5">
-        <div className="flex items-center gap-2">
-          <FileSearch size={16} className="accent" />
-          <h2 className="text-base font-semibold">拆书扫书</h2>
+        <div className="flex items-center gap-2.5">
+          <span
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
+            style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}
+          >
+            <FileSearch size={15} />
+          </span>
+          <h2 className="text-[15px] font-semibold tracking-wide">拆书扫书</h2>
         </div>
         <p className="mt-1 text-xs t3">导入文本,AI 分段扫描提取设定,一键写入当前书。</p>
 
@@ -157,10 +162,21 @@ export default function ImportView() {
 
         {analyzing && (
           <div className="mt-2">
-            <div className="h-1.5 w-full overflow-hidden rounded-full" style={{ background: 'var(--panel-2)' }}>
+            <div
+              className="h-1.5 w-full overflow-hidden rounded-full"
+              style={{
+                background: 'color-mix(in srgb, var(--text) 7%, var(--bg))',
+                boxShadow: 'inset 0 1px 2px rgba(18, 20, 26, 0.08)'
+              }}
+            >
               <div
-                className="h-full rounded-full transition-all"
-                style={{ width: `${progressPct}%`, background: 'var(--accent)' }}
+                className="h-full rounded-full"
+                style={{
+                  width: `${progressPct}%`,
+                  background: 'linear-gradient(90deg, color-mix(in srgb, var(--accent) 68%, #fff 32%), var(--accent))',
+                  boxShadow: '0 0 8px -2px color-mix(in srgb, var(--accent) 55%, transparent)',
+                  transition: 'width 0.4s cubic-bezier(0.32, 0.72, 0, 1)'
+                }}
               />
             </div>
             <p className="mt-1 flex items-center gap-1.5 text-xs accent">

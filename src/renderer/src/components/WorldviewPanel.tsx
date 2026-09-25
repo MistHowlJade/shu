@@ -68,16 +68,13 @@ export default function WorldviewPanel() {
         <label className="field-label">伏笔清单({foreshadows.filter((f) => !f.resolved).length} 条待回收)</label>
         <div className="space-y-1.5">
           {foreshadows.map((f) => (
-            <div
-              key={f.id}
-              className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs"
-              style={{ background: 'var(--panel-2)', border: '1px solid var(--border)' }}
-            >
+            <div key={f.id} className="soft-row flex items-center gap-1.5 px-2.5 py-1.5 text-xs">
               <button
-                className={`h-3.5 w-3.5 shrink-0 rounded-full border ${f.resolved ? '' : ''}`}
+                className={`h-3.5 w-3.5 shrink-0 rounded-full border transition ${f.resolved ? '' : 'hover:scale-110'}`}
                 style={{
                   background: f.resolved ? 'var(--ok)' : 'transparent',
-                  borderColor: f.resolved ? 'var(--ok)' : 'var(--border-strong)'
+                  borderColor: f.resolved ? 'var(--ok)' : 'var(--border-strong)',
+                  boxShadow: f.resolved ? '0 0 8px -2px color-mix(in srgb, var(--ok) 60%, transparent)' : 'none'
                 }}
                 title={f.resolved ? '已回收,点击改回待回收' : '待回收,点击标记已回收'}
                 onClick={() => toggleForeshadow(f.id)}
